@@ -1,0 +1,96 @@
+// MIS Permissions
+export const permissions = [
+  // Core MIS Permissions
+  { name: "dashboard", value: "Dashboard" },
+  { name: "attendance", value: "Attendance" },
+  { name: "grades", value: "Grades" },
+  { name: "fees", value: "Fees" },
+  { name: "books", value: "Books" },
+  { name: "sales", value: "Sales" },
+  { name: "customers", value: "Customers" },
+  { name: "lending", value: "Lending" },
+  { name: "expenses", value: "Expenses" },
+  { name: "reports", value: "Reports" },
+  { name: "settings", value: "Settings" },
+  { name: "users", value: "Users" },
+  { name: "parents", value: "Parents" },
+  { name: "academic_year", value: "Academic Year" },
+] as const;
+
+export type Permission = (typeof permissions)[number]["name"];
+
+export const routePermissions: Record<string, Permission | Permission[]> = {
+  "/mis": "dashboard",
+  "/mis/attendance": "attendance",
+  "/mis/attendance/mark": "attendance",
+  "/mis/attendance/report": "attendance",
+  "/mis/grades": "grades",
+  "/mis/grades/entry": "grades",
+  "/mis/grades/exams": "grades",
+  "/mis/grades/report-cards": "grades",
+  "/mis/fees": "fees",
+  "/mis/fees/structure": "fees",
+  "/mis/fees/collection": "fees",
+  "/mis/fees/reports": "fees",
+  "/mis/library": "books",
+  "/mis/library/catalog": "books",
+  "/mis/library/issue": "books",
+  "/mis/library/return": "books",
+  "/books": "books",
+  "/books/new": "books",
+  "/books/:id": "books",
+  "/books/:id/edit": "books",
+  "/library/books": "books",
+  "/library/books/new": "books",
+  "/library/books/:id": "books",
+  "/library/books/:id/edit": "books",
+  "/sales": "sales",
+  "/sales/new": "sales",
+  "/sales/:id/edit": "sales",
+  "/sales/customers/:id/purchase-history": "sales",
+  "/lending": "lending",
+  "/lending/new": "lending",
+  "/lending/:id": "lending",
+  "/lending/:id/edit": "lending",
+  "/expenses": "expenses",
+  "/expenses/new": "expenses",
+  "/expenses/:id": "expenses",
+  "/expenses/:id/edit": "expenses",
+  "/customers": "customers",
+  "/customers/new": "customers",
+  "/customers/:id": "customers",
+  "/customers/:id/edit": "customers",
+  "/library/sales": "sales",
+  "/library/sales/new": "sales",
+  "/library/sales/:id/edit": "sales",
+  "/library/lending": "lending",
+  "/library/lending/new": "lending",
+  "/library/lending/:id": "lending",
+  "/library/lending/:id/edit": "lending",
+  "/library/expenses": "expenses",
+  "/library/expenses/new": "expenses",
+  "/library/expenses/:id": "expenses",
+  "/library/expenses/:id/edit": "expenses",
+  "/library/customers": "customers",
+  "/library/customers/new": "customers",
+  "/library/customers/:id": "customers",
+  "/library/customers/:id/edit": "customers",
+  "/library/customers/:id/purchase-history": "sales",
+  "/mis/reports": "reports",
+  "/mis/parents": "parents",
+  "/mis/parents/:id": "parents",
+  "/mis/settings": "settings",
+  "/mis/settings/general": "settings",
+  "/mis/settings/users": "users",
+  "/mis/settings/academic-year": "academic_year",
+};
+
+export const hasRoutePermission = (
+  route: string,
+  userPermissions: Permission[]
+) => {
+  const rp = routePermissions[route];
+  if (rp === undefined) return true;
+  const perm = Array.isArray(rp) ? rp : [rp];
+  return perm.some((p) => userPermissions.includes(p));
+};
