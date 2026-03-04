@@ -16,6 +16,7 @@ ROLE_CHOICES = [
 class User(AbstractUser, BaseModel):
     """Extended user model"""
     phone = models.CharField(max_length=20, blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='users/profile/', blank=True, null=True)
 
 
     role_name = models.CharField(

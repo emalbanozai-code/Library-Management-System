@@ -73,6 +73,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        request = self.context.get('request')
+        avatar_url = None
+        if instance.profile_picture:
+            raw_url = instance.profile_picture.url
+            avatar_url = request.build_absolute_uri(raw_url) if request else raw_url
         return {
             'id': str(data['id']),
             'firstName': data['first_name'],
@@ -81,6 +86,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'email': data['email'],
             'phone': data['phone'],
             'role': data['role_name'] if data['role_name'] else None,
+            'avatarUrl': avatar_url,
             'permissions': data['permissions'],
             'preferences': {
                 'language': data['language_preference'],
@@ -102,6 +108,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class SelfUserProfileUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for users updating their own profile-safe fields."""
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name',
+            'last_name',
+            'phone',
+            'language_preference',
+            'theme',
+        ]
+        extra_kwargs = {
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+            'phone': {'required': False, 'allow_null': True, 'allow_blank': True},
+            'language_preference': {'required': False},
+            'theme': {'required': False},
+        }
+
+    def to_representation(self, instance):
+        return UserProfileSerializer(instance, context=self.context).data
+
+
 class UserListSerializer(serializers.ModelSerializer):
     """Serializer for User profile data"""
     
@@ -116,14 +146,20 @@ class UserListSerializer(serializers.ModelSerializer):
 class CreateUserSerializer(serializers.ModelSerializer):
     """Serializer for creating new users (admin only)"""
     password = serializers.CharField(write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True, required=True)
     send_verification_email = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = User
         fields = [
             'first_name', 'last_name', 'username', 'email', 'phone', 'password',
-            'role_name', 'send_verification_email'
+            'confirm_password', 'role_name', 'send_verification_email'
         ]
+
+    def validate(self, attrs):
+        if attrs.get('confirm_password') != attrs.get('password'):
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match"})
+        return attrs
 
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
@@ -155,6 +191,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
         role_name = validated_data.pop('role_name')
         password = validated_data.pop('password')
+        validated_data.pop('confirm_password', None)
         send_email = validated_data.pop('send_verification_email', False)
 
         # Create user

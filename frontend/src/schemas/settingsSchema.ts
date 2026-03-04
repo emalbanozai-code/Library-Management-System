@@ -24,3 +24,26 @@ export const emailSettingsSchema = z.object({
   from_email: z.string().email("Invalid from email address"),
 });
 
+export const systemSettingsSchema = z.object({
+  max_books_per_member: z
+    .number({
+      invalid_type_error: "Maximum books must be a number",
+      message: "Maximum books is required",
+    })
+    .int("Maximum books must be a whole number")
+    .min(1, "Minimum value is 1"),
+  max_lending_days: z
+    .number({
+      invalid_type_error: "Maximum lending days must be a number",
+      message: "Maximum lending days is required",
+    })
+    .int("Maximum lending days must be a whole number")
+    .min(1, "Minimum value is 1"),
+  fine_per_day: z
+    .number({
+      invalid_type_error: "Fine per day must be a number",
+      message: "Fine per day is required",
+    })
+    .min(0, "Fine per day cannot be negative"),
+  allow_renewal: z.boolean(),
+});

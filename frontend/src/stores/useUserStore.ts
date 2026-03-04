@@ -28,7 +28,7 @@ export type UserProfile = {
   email: string;
   phone: string;
   role: RoleName;
-  avatarUrl: string;
+  avatarUrl: string | null;
   location: number;
   permissions: Permission[];
   preferences: {

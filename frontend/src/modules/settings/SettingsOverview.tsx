@@ -7,9 +7,9 @@ export default function SettingsOverview() {
   const navigate = useNavigate();
 
   const settingsCategories = [
-    { title: t("mis.settings.general", "General Settings"), icon: "pi pi-cog", path: "/mis/settings/general", description: t("mis.settings.generalDesc", "School information and basic configuration") },
-    { title: t("mis.settings.userManagement", "User Management"), icon: "pi pi-users", path: "/mis/settings/users", description: t("mis.settings.userDesc", "Manage users, roles, and permissions") },
-    { title: t("mis.settings.academicYear", "Academic Year"), icon: "pi pi-calendar", path: "/mis/settings/academic-year", description: t("mis.settings.yearDesc", "Configure academic years and sessions") },
+    { title: t("mis.settings.general", "General Settings"), icon: "pi pi-cog", path: "/settings/general", description: t("mis.settings.generalDesc", "Library information and basic configuration") },
+    { title: t("mis.settings.system", "System Settings"), icon: "pi pi-sliders-h", path: "/settings/system", description: t("mis.settings.systemDesc", "Control borrowing limits and fine behavior") },
+    { title: t("mis.settings.userManagement", "User Management"), icon: "pi pi-users", path: "/settings/users", description: t("mis.settings.userDesc", "Manage users, roles, and permissions") },
   ];
 
   return (

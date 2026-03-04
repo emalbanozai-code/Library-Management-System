@@ -9,11 +9,13 @@ export interface UserListItem {
   lastName: string;
   username: string;
   email: string;
+  phone: string | null;
   role: RoleName;
-  isActive: boolean;
+  status: "active" | "inactive";
   lastLogin: string | null;
   createdAt: string;
   avatarUrl: string | null;
+  permissions: Permission[];
 }
 
 // Paginated Users Response
@@ -30,8 +32,11 @@ export interface CreateUserData {
   last_name: string;
   username: string;
   email: string;
+  phone?: string;
   password: string;
-  role: RoleName;
+  confirm_password: string;
+  role_name: RoleName;
+  send_verification_email?: boolean;
 }
 
 // Update User Data
@@ -40,7 +45,8 @@ export interface UpdateUserData {
   last_name?: string;
   username?: string;
   email?: string;
-  role?: RoleName;
+  phone?: string;
+  role_name?: RoleName;
   is_active?: boolean;
 }
 
@@ -53,27 +59,27 @@ export interface UpdatePermissionsData {
 export const userManagementService = {
   // Get all users with pagination
   getUsers: (params?: { page?: number; page_size?: number; search?: string; role?: string }) =>
-    apiClient.get<PaginatedUsers>("/accounts/users/", { params }),
+    apiClient.get<PaginatedUsers>("/core/users/", { params }),
 
   // Get single user
   getUser: (id: number) =>
-    apiClient.get<UserListItem>(`/accounts/users/${id}/`),
+    apiClient.get<UserListItem>(`/core/users/${id}/`),
 
   // Create new user
   createUser: (data: CreateUserData) =>
-    apiClient.post<UserListItem>("/accounts/users/", data),
+    apiClient.post<UserListItem>("/core/users/", data),
 
   // Update user
   updateUser: (id: number, data: UpdateUserData) =>
-    apiClient.patch<UserListItem>(`/accounts/users/${id}/`, data),
+    apiClient.patch<UserListItem>(`/core/users/${id}/`, data),
 
   // Delete user
   deleteUser: (id: number) =>
-    apiClient.delete(`/accounts/users/${id}/`),
+    apiClient.delete(`/core/users/${id}/`),
 
   // Update user permissions
   updatePermissions: (id: number, data: UpdatePermissionsData) =>
-    apiClient.patch<UserListItem>(`/accounts/users/${id}/permissions/`, data),
+    apiClient.patch<UserListItem>(`/core/users/${id}/permissions/`, data),
 
   // Change user password (admin)
   changeUserPassword: (id: number, data: { new_password: string }) =>

@@ -16,6 +16,8 @@ class IsSelfOrHasPermission(permissions.BasePermission):
         # Superusers can access everything
         if request.user.is_superuser:
             return True
+        if request.user.role_name == 'admin':
+            return True
         
         if obj.id == request.user.id:
             return True
@@ -55,6 +57,8 @@ class HasModulePermission(permissions.BasePermission):
         
         # Superusers have all permissions
         if request.user.is_superuser:
+            return True
+        if request.user.role_name == 'admin':
             return True
         
         # Get permission requirements from view

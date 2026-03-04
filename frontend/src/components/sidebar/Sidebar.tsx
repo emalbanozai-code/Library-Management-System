@@ -1,21 +1,24 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   FileText,
-  Settings,
   LogOut,
   BookMarked,
   ShoppingCart,
+  User,
   Users,
   Handshake,
   Wallet,
   List,
   Tags,
+  ImageIcon,
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 import SidebarToggle from "./SidebarToggle";
 import { useSidebarState, type SubNavItem } from "./useSidebarState";
 import { useUserStore } from "@/modules/auth";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 
 /**
  * Enhanced Sidebar Component
@@ -25,6 +28,15 @@ export default function Sidebar() {
   const { t } = useTranslation();
   const { isCollapsed, isMobileOpen, closeMobile } = useSidebarState();
   const { logout } = useUserStore();
+  const { logoSettings, fetchLogoSettings } = useSettingsStore();
+
+  useEffect(() => {
+    if (!logoSettings?.logo) {
+      fetchLogoSettings().catch(() => {
+        // Ignore logo fetch failures in sidebar.
+      });
+    }
+  }, [fetchLogoSettings, logoSettings?.logo]);
 
   // Define navigation items with sub-items
   const navItems = [
@@ -68,6 +80,11 @@ export default function Sidebar() {
       icon: Users,
     },
     {
+      path: "/users",
+      label: "User",
+      icon: User,
+    },
+    {
       path: "/lending",
       label: "Lending",
       icon: Handshake,
@@ -82,11 +99,6 @@ export default function Sidebar() {
       label: "Reports",
       icon: FileText,
       divider: true,
-    },
-    {
-      path: "/mis/settings",
-      label: "Settings",
-      icon: Settings,
     },
   ];
 
@@ -116,8 +128,16 @@ export default function Sidebar() {
         {!isCollapsed ? (
           <>
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark shadow-lg shadow-primary/30">
-                {/* <School className="h-5 w-5 text-white" /> */}
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dark shadow-lg shadow-primary/30">
+                {logoSettings?.logo ? (
+                  <img
+                    src={logoSettings.logo}
+                    alt="Library logo"
+                    className="h-full w-full bg-white object-contain"
+                  />
+                ) : (
+                  <ImageIcon className="h-5 w-5 text-white" />
+                )}
               </div>
               <div>
                 <h1 className="text-base font-bold text-white leading-none">Library MIS</h1>
@@ -128,8 +148,16 @@ export default function Sidebar() {
           </>
         ) : (
           <>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-dark shadow-lg shadow-primary/30">
-              {/* <School className="h-5 w-5 text-white" /> */}
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary to-primary-dark shadow-lg shadow-primary/30">
+              {logoSettings?.logo ? (
+                <img
+                  src={logoSettings.logo}
+                  alt="Library logo"
+                  className="h-full w-full bg-white object-contain"
+                />
+              ) : (
+                <ImageIcon className="h-5 w-5 text-white" />
+              )}
             </div>
             <SidebarToggle />
           </>

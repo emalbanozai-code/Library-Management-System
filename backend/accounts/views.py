@@ -18,7 +18,7 @@ from .models import (
 )
 from .serializers import (
     ActivityLogSerializer, UserListSerializer, UserProfileSerializer,
-    ChangePasswordSerializer, LoginSerializer,
+    SelfUserProfileUpdateSerializer, ChangePasswordSerializer, LoginSerializer,
     CreateUserSerializer, ForgotPasswordSerializer,
     VerifyResetCodeSerializer, ResetPasswordSerializer, VerifyEmailSerializer,
     ResendVerificationSerializer
@@ -32,17 +32,17 @@ from django_filters.rest_framework import DjangoFilterBackend, FilterSet, CharFi
 class UserViewSet(PermissionMixin, viewsets.ModelViewSet):
     """ViewSet for User management"""
     serializer_class = UserProfileSerializer
-    permission_module = 'users'
+    permission_module = 'settings'
     parser_classes = [MultiPartParser, FormParser, JSONParser] 
     
     def get_queryset(self):
 
         user = self.request.user
-        if user.role_name and user.role_name == 'admin':
+        if user.is_superuser or (user.role_name and user.role_name == 'admin'):
             return User.objects.all()
         else:
             # Regular users can only see themselves
-            return User.objects.filter(id=user.id).select_related('location', 'preferred_currency')
+            return User.objects.filter(id=user.id)
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -50,6 +50,33 @@ class UserViewSet(PermissionMixin, viewsets.ModelViewSet):
         elif self.action == "list":
             return UserListSerializer
         return UserProfileSerializer
+
+    def _is_admin_user(self, user):
+        return bool(user and (user.is_superuser or user.role_name == 'admin'))
+
+    def _admin_required_response(self):
+        return Response(
+            {'detail': 'Only administrators can manage users.'},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    def create(self, request, *args, **kwargs):
+        if not self._is_admin_user(request.user):
+            return self._admin_required_response()
+        return super().create(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        if not self._is_admin_user(request.user):
+            return self._admin_required_response()
+        return super().partial_update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        if not self._is_admin_user(request.user):
+            return self._admin_required_response()
+        instance = self.get_object()
+        if request.user.id == instance.id:
+            return Response({'detail': 'You cannot delete your own account.'}, status=status.HTTP_400_BAD_REQUEST)
+        return super().destroy(request, *args, **kwargs)
         
     @action(detail=True, methods=['post'])
     def deactivate(self, request, pk=None):
@@ -67,24 +94,68 @@ class UserViewSet(PermissionMixin, viewsets.ModelViewSet):
         user.save()
         return Response({'message': 'User activated successfully'})
 
-    @action(detail=False, methods=['get', 'patch'], permission_module=None)
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_module=None,
+        permission_classes=[IsAuthenticated],
+    )
     def me(self, request):
-        if self.action == "get":
+        if request.method == "GET":
             """Get current user profile"""
             
-            serializer = self.get_serializer(request.user, context={'request': request})
+            serializer = UserProfileSerializer(request.user, context={'request': request})
             return Response(serializer.data)
 
         """Update current user profile"""
-        serializer = self.get_serializer(
+        serializer = SelfUserProfileUpdateSerializer(
             request.user, 
             data=request.data, 
-            partial=True
+            partial=True,
+            context={'request': request},
         )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=True,
+        methods=['post'],
+        parser_classes=[MultiPartParser],
+        permission_classes=[IsAuthenticated],
+        url_path='upload-photo',
+    )
+    def upload_photo(self, request, pk=None):
+        user = self.get_object()
+        if request.user.id != user.id and not request.user.is_superuser:
+            return Response({'detail': 'You can only upload your own photo.'}, status=status.HTTP_403_FORBIDDEN)
+
+        photo = request.FILES.get('photo')
+        if not photo:
+            return Response({'error': 'No photo file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not photo.content_type.startswith('image/'):
+            return Response({'error': 'Invalid file type. Please upload an image.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.profile_picture = photo
+        user.save(update_fields=['profile_picture'])
+
+        avatar_url = request.build_absolute_uri(user.profile_picture.url) if user.profile_picture else None
+        return Response({'avatar_url': avatar_url}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['delete'], permission_classes=[IsAuthenticated], url_path='delete-photo')
+    def delete_photo(self, request, pk=None):
+        user = self.get_object()
+        if request.user.id != user.id and not request.user.is_superuser:
+            return Response({'detail': 'You can only delete your own photo.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if user.profile_picture:
+            user.profile_picture.delete(save=False)
+            user.profile_picture = None
+            user.save(update_fields=['profile_picture'])
+
+        return Response({'avatar_url': None}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['put'])
     def permissions(self, request, pk=None):

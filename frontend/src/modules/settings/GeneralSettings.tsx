@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -34,6 +34,7 @@ export default function GeneralSettings() {
   const [showPassword, setShowPassword] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     shopSettings,
@@ -52,7 +53,7 @@ export default function GeneralSettings() {
     testEmailConfiguration,
   } = useSettingsStore();
 
-  // School Profile Form
+  // Library Profile Form
   const {
     register: registerShop,
     handleSubmit: handleSubmitShop,
@@ -98,13 +99,13 @@ export default function GeneralSettings() {
     }
   }, [logoSettings]);
 
-  // Handle school profile save
+  // Handle library profile save
   const onSaveShopSettings = async (data: ShopSettings) => {
     try {
       await updateShopSettings(data);
-      toast.success(t("settings.shopSaved", "School profile saved successfully"));
+      toast.success(t("settings.shopSaved", "Library profile saved successfully"));
     } catch (error) {
-      toast.error(extractAxiosError(error, "Failed to save school profile"));
+      toast.error(extractAxiosError(error, "Failed to save library profile"));
     }
   };
 
@@ -133,18 +134,32 @@ export default function GeneralSettings() {
 
   // Handle logo upload
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length !== 1) {
+      toast.error(t("settings.oneFileOnly", "Please select exactly one file"));
+      if (logoFileInputRef.current) {
+        logoFileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    const file = files[0];
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error(t("settings.invalidFileType", "Please select an image file"));
+      if (logoFileInputRef.current) {
+        logoFileInputRef.current.value = "";
+      }
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast.error(t("settings.fileTooLarge", "File size must be less than 2MB"));
+      if (logoFileInputRef.current) {
+        logoFileInputRef.current.value = "";
+      }
       return;
     }
 
@@ -153,6 +168,10 @@ export default function GeneralSettings() {
       toast.success(t("settings.logoUploaded", "Logo uploaded successfully"));
     } catch (error) {
       toast.error(extractAxiosError(error, "Failed to upload logo"));
+    } finally {
+      if (logoFileInputRef.current) {
+        logoFileInputRef.current.value = "";
+      }
     }
   };
 
@@ -182,15 +201,15 @@ export default function GeneralSettings() {
     <div className="space-y-6">
       <PageHeader
         title={t("mis.settings.general", "General Settings")}
-        subtitle={t("mis.settings.generalSubtitle", "Configure school information and system settings")}
+        subtitle={t("mis.settings.generalSubtitle", "Configure library information and system settings")}
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* School Profile */}
+        {/* Library Profile */}
         <Card>
           <CardHeader
-            title={t("settings.schoolProfile", "School Profile")}
-            subtitle={t("settings.schoolProfileSubtitle", "Basic information about your school")}
+            title={t("settings.schoolProfile", "Library Profile")}
+            subtitle={t("settings.schoolProfileSubtitle", "Basic information about your library")}
           />
           <CardContent>
             {isLoadingShop ? (
@@ -198,8 +217,8 @@ export default function GeneralSettings() {
             ) : (
               <form onSubmit={handleSubmitShop(onSaveShopSettings)} className="space-y-4">
                 <Input
-                  label={t("settings.schoolName", "School Name")}
-                  placeholder={t("settings.schoolNamePlaceholder", "Enter school name")}
+                  label={t("settings.schoolName", "Library Name")}
+                  placeholder={t("settings.schoolNamePlaceholder", "Enter library name")}
                   leftIcon={<Building2 className="h-4 w-4" />}
                   error={shopErrors.shop_name?.message}
                   {...registerShop("shop_name")}
@@ -208,7 +227,7 @@ export default function GeneralSettings() {
                 <Input
                   label={t("settings.contactEmail", "Contact Email")}
                   type="email"
-                  placeholder={t("settings.contactEmailPlaceholder", "contact@school.edu")}
+                  placeholder={t("settings.contactEmailPlaceholder", "contact@library.edu")}
                   leftIcon={<Mail className="h-4 w-4" />}
                   error={shopErrors.contact_email?.message}
                   {...registerEmail("from_email")}
@@ -225,7 +244,7 @@ export default function GeneralSettings() {
 
                 <Input
                   label={t("settings.address", "Address")}
-                  placeholder={t("settings.addressPlaceholder", "Enter school address")}
+                  placeholder={t("settings.addressPlaceholder", "Enter library address")}
                   leftIcon={<MapPin className="h-4 w-4" />}
                   error={shopErrors.address?.message}
                   {...registerShop("address")}
@@ -244,8 +263,8 @@ export default function GeneralSettings() {
         {/* Logo Upload */}
         <Card>
           <CardHeader
-            title={t("settings.schoolLogo", "School Logo")}
-            subtitle={t("settings.logoSubtitle", "Upload your school's logo (max 2MB)")}
+            title={t("settings.schoolLogo", "Library Logo")}
+            subtitle={t("settings.logoSubtitle", "Upload your library's logo (max 2MB)")}
           />
           <CardContent>
             {isLoadingLogo ? (
@@ -261,7 +280,7 @@ export default function GeneralSettings() {
                     <div className="group relative">
                       <img
                         src={logoPreview}
-                        alt="School Logo"
+                        alt="Library Logo"
                         className="h-32 w-32 rounded-xl border border-border object-contain"
                       />
                       <button
@@ -279,26 +298,25 @@ export default function GeneralSettings() {
                   )}
                 </div>
 
-                {/* Upload Button */}
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    loading={isSavingLogo}
-                    leftIcon={<Upload className="h-4 w-4" />}
-                    onClick={() => {}}
-                  >
-                    {logoPreview
-                      ? t("settings.changeLogo", "Change Logo")
-                      : t("settings.uploadLogo", "Upload Logo")}
-                  </Button>
-                </label>
+                <input
+                  ref={logoFileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                  multiple={false}
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  loading={isSavingLogo}
+                  leftIcon={<Upload className="h-4 w-4" />}
+                  onClick={() => logoFileInputRef.current?.click()}
+                >
+                  {logoPreview
+                    ? t("settings.changeLogo", "Change Logo")
+                    : t("settings.uploadLogo", "Upload Logo")}
+                </Button>
 
                 <p className="text-center text-xs text-muted">
                   {t("settings.logoHint", "Recommended: PNG or JPG, 256x256px or larger")}
@@ -369,7 +387,7 @@ export default function GeneralSettings() {
                   <Input
                     label={t("settings.fromEmail", "From Email")}
                     type="email"
-                    placeholder="noreply@school.edu"
+                    placeholder="noreply@library.edu"
                     leftIcon={<Mail className="h-4 w-4" />}
                     error={emailErrors.from_email?.message}
                     {...registerEmail("from_email")}

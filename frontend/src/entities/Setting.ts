@@ -18,8 +18,16 @@ export interface LogoSettings {
   logo: string | null;
 }
 
+export interface SystemSettings {
+  max_books_per_member: number;
+  max_lending_days: number;
+  fine_per_day: number;
+  allow_renewal: boolean;
+}
+
 export interface Setting {
   logo_settings: LogoSettings;
   email_settings: EmailSettings;
   shop_settings: ShopSettings;
+  system_settings: SystemSettings;
 }

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
@@ -77,6 +77,7 @@ export default function UserProfile() {
   const {
     register: registerProfile,
     handleSubmit: handleSubmitProfile,
+    reset: resetProfile,
     formState: { errors: profileErrors, isDirty: isProfileDirty },
   } = useForm<ProfileUpdateFormData>({
     resolver: zodResolver(profileUpdateSchema),
@@ -101,6 +102,8 @@ export default function UserProfile() {
   const {
     register: registerPreferences,
     handleSubmit: handleSubmitPreferences,
+    reset: resetPreferences,
+    watch: watchPreferences,
     formState: { errors: preferencesErrors, isDirty: isPreferencesDirty },
   } = useForm<PreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
@@ -140,6 +143,21 @@ export default function UserProfile() {
       toast.error(extractAxiosError(error, "Failed to update preferences"));
     }
   };
+
+  useEffect(() => {
+    if (!userProfile) return;
+
+    resetProfile({
+      first_name: userProfile.firstName || "",
+      last_name: userProfile.lastName || "",
+      phone: userProfile.phone || "",
+    });
+
+    resetPreferences({
+      language_preference: userProfile.preferences?.language || "en",
+      theme: userProfile.preferences?.theme || "system",
+    });
+  }, [resetPreferences, resetProfile, userProfile]);
 
   // Handle photo upload
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +206,7 @@ export default function UserProfile() {
     { id: "security" as TabType, label: t("profile.security", "Security"), icon: Shield },
     { id: "preferences" as TabType, label: t("profile.preferences", "Preferences"), icon: Palette },
   ];
+  const selectedTheme = watchPreferences("theme");
 
   // Get initials for avatar fallback
   const getInitials = () => {
@@ -355,7 +374,7 @@ export default function UserProfile() {
                     value={userProfile.email}
                     disabled
                     leftIcon={<Mail className="h-4 w-4" />}
-                    helperText={t("profile.emailReadonly", "Contact admin to change email")}
+                    hint={t("profile.emailReadonly", "Contact admin to change email")}
                   />
 
                   <Input
@@ -371,7 +390,7 @@ export default function UserProfile() {
                     value={userProfile.username}
                     disabled
                     leftIcon={<User className="h-4 w-4" />}
-                    helperText={t("profile.usernameReadonly", "Username cannot be changed")}
+                    hint={t("profile.usernameReadonly", "Username cannot be changed")}
                   />
 
                   <Input
@@ -379,7 +398,7 @@ export default function UserProfile() {
                     value={getRoleNameDisplay(userProfile.role) || userProfile.role}
                     disabled
                     leftIcon={<Shield className="h-4 w-4" />}
-                    helperText={t("profile.roleReadonly", "Contact admin to change role")}
+                    hint={t("profile.roleReadonly", "Contact admin to change role")}
                   />
                 </div>
 
@@ -435,7 +454,7 @@ export default function UserProfile() {
                     </button>
                   }
                   error={passwordErrors.new_password?.message}
-                  helperText={t("profile.passwordHint", "Min 8 chars, include uppercase, lowercase, and number")}
+                  hint={t("profile.passwordHint", "Min 8 chars, include uppercase, lowercase, and number")}
                   {...registerPassword("new_password")}
                 />
 
@@ -487,8 +506,8 @@ export default function UserProfile() {
                     {...registerPreferences("language_preference")}
                   >
                     <option value="en">English</option>
-                    <option value="fa">فارسی (Farsi)</option>
-                    <option value="ps">پښتو (Pashto)</option>
+                    <option value="da">Dari</option>
+                    <option value="pa">Pashto</option>
                   </select>
                   {preferencesErrors.language_preference?.message && (
                     <p className="text-sm text-error">{preferencesErrors.language_preference.message}</p>
@@ -510,7 +529,7 @@ export default function UserProfile() {
                       <label
                         key={option.value}
                         className={`flex items-center justify-center gap-2 px-4 py-3 border rounded-lg cursor-pointer transition-colors ${
-                          userProfile.preferences?.theme === option.value
+                          selectedTheme === option.value
                             ? "border-primary bg-primary/10 text-primary"
                             : "border-border hover:border-primary/50"
                         }`}
@@ -522,7 +541,7 @@ export default function UserProfile() {
                           {...registerPreferences("theme")}
                         />
                         <span className="text-sm font-medium">{option.label}</span>
-                        {userProfile.preferences?.theme === option.value && (
+                        {selectedTheme === option.value && (
                           <Check className="h-4 w-4" />
                         )}
                       </label>
@@ -543,3 +562,4 @@ export default function UserProfile() {
     </div>
   );
 }
+

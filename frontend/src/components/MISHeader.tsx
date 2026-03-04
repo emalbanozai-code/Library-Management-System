@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, Link } from "react-router-dom";
 import {
@@ -19,36 +19,23 @@ import { useUserStore } from "@/modules/auth/stores/useUserStore";
 import { useTheme } from "@/hooks/useTheme";
 import { useSidebarState } from "./sidebar/useSidebarState";
 import i18n from "@/utils/i18n";
+import {
+  notificationService,
+  type NotificationItem,
+} from "@/modules/notifications";
 
 export default function MISHeader() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
 
   const { userProfile, logout } = useUserStore();
   const { toggleMobile } = useSidebarState();
 
-  const notifications = [
-    {
-      id: 1,
-      title: "New student registered",
-      time: "5 min ago",
-      read: false,
-    },
-    {
-      id: 2,
-      title: "Fee payment received",
-      time: "1 hour ago",
-      read: false,
-    },
-    {
-      id: 3,
-      title: "Attendance report ready",
-      time: "2 hours ago",
-      read: true,
-    },
-  ];
   const languages = [
     { code: "en", name: t("language.english"), flag: "🇬🇧" },
     { code: "da", name: t("language.dari"), flag: "🇦🇫" },
@@ -56,8 +43,79 @@ export default function MISHeader() {
   ];
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
   const { theme, toggleTheme } = useTheme();
+
+  const fetchNotifications = useCallback(async () => {
+    setIsLoadingNotifications(true);
+    try {
+      const data = await notificationService.list();
+      setNotifications(data);
+    } catch {
+      // Keep header usable even if notifications fail.
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const handleMarkAllRead = async () => {
+    setIsMarkingAllRead(true);
+    try {
+      await notificationService.markAllRead();
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, isRead: true, readAt: n.readAt ?? new Date().toISOString() }))
+      );
+    } catch {
+      toast.error(t("notifications.markAllFailed", "Failed to mark notifications as read"));
+    } finally {
+      setIsMarkingAllRead(false);
+    }
+  };
+
+  const handleMarkRead = async (notification: NotificationItem) => {
+    if (notification.isRead) return;
+
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notification.id ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+      )
+    );
+
+    try {
+      await notificationService.markRead(notification.id);
+    } catch {
+      // If request fails, refresh server state.
+      fetchNotifications();
+    }
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const timestamp = new Date(dateString).getTime();
+    const now = Date.now();
+    const diffSeconds = Math.round((timestamp - now) / 1000);
+    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+    const intervals: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+      ["year", 60 * 60 * 24 * 365],
+      ["month", 60 * 60 * 24 * 30],
+      ["week", 60 * 60 * 24 * 7],
+      ["day", 60 * 60 * 24],
+      ["hour", 60 * 60],
+      ["minute", 60],
+      ["second", 1],
+    ];
+
+    for (const [unit, secondsInUnit] of intervals) {
+      if (Math.abs(diffSeconds) >= secondsInUnit || unit === "second") {
+        return rtf.format(Math.round(diffSeconds / secondsInUnit), unit);
+      }
+    }
+    return "";
+  };
   // Handle logout
   const handleLogout = () => {
     logout();
@@ -106,8 +164,12 @@ export default function MISHeader() {
         <div className="relative">
           <button
             onClick={() => {
-              setShowNotifications(!showNotifications);
+              const nextValue = !showNotifications;
+              setShowNotifications(nextValue);
               setShowProfileMenu(false);
+              if (nextValue) {
+                fetchNotifications();
+              }
             }}
             className="relative rounded-lg p-2 text-text-secondary transition-colors hover:bg-surface-hover hover:text-text-primary"
           >
@@ -125,33 +187,46 @@ export default function MISHeader() {
                 <h3 className="font-semibold text-text-primary">
                   Notifications
                 </h3>
-                <button className="text-sm text-primary hover:underline">
+                <button
+                  onClick={handleMarkAllRead}
+                  disabled={isMarkingAllRead || unreadCount === 0}
+                  className="text-sm text-primary hover:underline disabled:text-muted disabled:no-underline"
+                >
                   Mark all read
                 </button>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className={`flex items-start gap-3 border-b border-border p-4 last:border-0 ${
-                      !notification.read ? "bg-primary/5" : ""
-                    }`}
-                  >
-                    <div
-                      className={`mt-1 h-2 w-2 rounded-full ${
-                        notification.read ? "bg-muted" : "bg-primary"
+                {isLoadingNotifications ? (
+                  <div className="p-4 text-sm text-text-secondary">Loading notifications...</div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-4 text-sm text-text-secondary">No notifications yet.</div>
+                ) : (
+                  notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      onClick={() => handleMarkRead(notification)}
+                      className={`flex w-full items-start gap-3 border-b border-border p-4 text-left last:border-0 ${
+                        !notification.isRead ? "bg-primary/5" : ""
                       }`}
-                    />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-text-primary">
-                        {notification.title}
-                      </p>
-                      <p className="mt-0.5 text-xs text-text-secondary">
-                        {notification.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                    >
+                      <div
+                        className={`mt-1 h-2 w-2 rounded-full ${
+                          notification.isRead ? "bg-muted" : "bg-primary"
+                        }`}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-text-primary">
+                          {notification.title}
+                        </p>
+                        <p className="mt-1 text-xs text-text-secondary">{notification.message}</p>
+                        <p className="mt-1 text-[11px] text-muted">
+                          {formatRelativeTime(notification.createdAt)}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
               <div className="border-t border-border p-3">
                 <button className="w-full rounded-lg bg-surface py-2 text-sm font-medium text-primary transition-colors hover:bg-surface-hover">
@@ -235,12 +310,12 @@ export default function MISHeader() {
               <div className="border-b border-border px-4 py-3">
                 <p className="font-medium text-text-primary">{displayName}</p>
                 <p className="text-sm text-text-secondary">
-                  {userProfile?.email || "user@school.edu"}
+                  {userProfile?.email || "user@library.edu"}
                 </p>
               </div>
               <div className="py-1">
                 <Link
-                  to="/mis/profile"
+                  to="/profile"
                   className="flex w-full items-center gap-3 px-4 py-2 text-sm text-text-primary transition-colors hover:bg-surface-hover"
                   onClick={() => setShowProfileMenu(false)}
                 >
@@ -248,7 +323,7 @@ export default function MISHeader() {
                   {t("auth.profile", "Profile")}
                 </Link>
                 <Link
-                  to="/mis/settings"
+                  to="/settings"
                   className="flex w-full items-center gap-3 px-4 py-2 text-sm text-text-primary transition-colors hover:bg-surface-hover"
                   onClick={() => setShowProfileMenu(false)}
                 >

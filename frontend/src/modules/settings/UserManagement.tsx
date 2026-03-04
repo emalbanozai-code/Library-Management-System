@@ -26,22 +26,46 @@ import {
   Skeleton,
 } from "@components/ui";
 import Input from "@components/ui/Input";
-import { useUsersList, useCreateUser, useDeleteUser } from "@/modules/auth/api/useUsers";
+import {
+  useUsersList,
+  useCreateUser,
+  useDeleteUser,
+  useUpdateUser,
+} from "@/modules/auth/api/useUsers";
 import { useUserStore } from "@/modules/auth/stores/useUserStore";
 import { roles, getRoleNameDisplay, type RoleName } from "@/data/roles";
-import type { UserListItem, CreateUserData } from "@/mis/lib/userManagementService";
+import type { UserListItem, CreateUserData } from "@/modules/auth/api/userManagementService";
 
 // Create User Schema
-const createUserSchema = z.object({
+const createUserSchema = z
+  .object({
+    first_name: z.string().min(2, "First name must be at least 2 characters"),
+    last_name: z.string().min(2, "Last name must be at least 2 characters"),
+    username: z.string().min(3, "Username must be at least 3 characters"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirm_password: z.string().min(8, "Confirm password is required"),
+    role_name: z.enum(["receptionist", "viewer"] as const),
+    send_verification_email: z.boolean().default(false),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords do not match",
+    path: ["confirm_password"],
+  });
+
+type CreateUserFormData = z.infer<typeof createUserSchema>;
+const updateUserSchema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters"),
   last_name: z.string().min(2, "Last name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  role_name: z.enum(["manager", "cashier", "inventory_manager", "sales_rep", "viewer"] as const),
+  phone: z.string().optional(),
+  role_name: z.enum(["receptionist", "viewer"] as const),
+  status: z.enum(["active", "inactive"] as const),
 });
-
-type CreateUserFormData = z.infer<typeof createUserSchema>;
+type UpdateUserFormData = z.infer<typeof updateUserSchema>;
+const creatableRoles: RoleName[] = ["receptionist", "viewer"];
 
 // Mock data for fallback
 const mockUsers: UserListItem[] = [
@@ -50,10 +74,13 @@ const mockUsers: UserListItem[] = [
     firstName: "Ahmad",
     lastName: "Ahmadi",
     username: "ahmad.ahmadi",
-    email: "ahmad@school.edu",
-    role: "manager",
+    email: "ahmad@library.edu",
+    phone: null,
+    role: "receptionist",
     status: "active",
+    lastLogin: null,
     createdAt: "2024-01-15",
+    avatarUrl: null,
     permissions: [],
   },
   {
@@ -61,10 +88,13 @@ const mockUsers: UserListItem[] = [
     firstName: "Fatima",
     lastName: "Karimi",
     username: "fatima.karimi",
-    email: "fatima@school.edu",
-    role: "cashier",
+    email: "fatima@library.edu",
+    phone: null,
+    role: "receptionist",
     status: "active",
+    lastLogin: null,
     createdAt: "2024-01-20",
+    avatarUrl: null,
     permissions: [],
   },
   {
@@ -72,10 +102,13 @@ const mockUsers: UserListItem[] = [
     firstName: "Mohammad",
     lastName: "Rasooli",
     username: "mohammad.r",
-    email: "mohammad@school.edu",
+    email: "mohammad@library.edu",
+    phone: null,
     role: "viewer",
     status: "inactive",
+    lastLogin: null,
     createdAt: "2024-02-01",
+    avatarUrl: null,
     permissions: [],
   },
 ];
@@ -86,10 +119,14 @@ export default function UserManagement() {
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
 
   const { userProfile } = useUserStore();
+  const isAdmin = userProfile?.role === "admin";
 
   // Fetch users
   const {
@@ -106,6 +143,7 @@ export default function UserManagement() {
 
   // Mutations
   const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser(editingUser?.id ?? 0);
   const deleteUserMutation = useDeleteUser();
 
   // Form
@@ -121,9 +159,20 @@ export default function UserManagement() {
       last_name: "",
       username: "",
       email: "",
+      phone: "",
       password: "",
+      confirm_password: "",
       role_name: "viewer",
+      send_verification_email: false,
     },
+  });
+  const {
+    register: registerUpdate,
+    handleSubmit: handleSubmitUpdate,
+    reset: resetUpdate,
+    formState: { errors: updateErrors },
+  } = useForm<UpdateUserFormData>({
+    resolver: zodResolver(updateUserSchema),
   });
 
   // Use API data or fallback to mock
@@ -140,12 +189,18 @@ export default function UserManagement() {
         user.firstName.toLowerCase().includes(query) ||
         user.lastName.toLowerCase().includes(query) ||
         user.username.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
+        user.email.toLowerCase().includes(query) ||
+        (user.phone ? user.phone.toLowerCase().includes(query) : false)
     );
   }, [users, searchQuery]);
 
   // Handle create user
   const onSubmit = async (data: CreateUserFormData) => {
+    if (!isAdmin) {
+      toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
+      return;
+    }
+
     try {
       await createUserMutation.mutateAsync(data as CreateUserData);
       setIsModalOpen(false);
@@ -155,8 +210,62 @@ export default function UserManagement() {
     }
   };
 
+  const openEditModal = (user: UserListItem) => {
+    if (!isAdmin) {
+      toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
+      return;
+    }
+
+    if (user.role === "admin") {
+      toast.error(t("settings.cantEditAdmin", "Administrator account cannot be edited here"));
+      return;
+    }
+
+    setEditingUser(user);
+    resetUpdate({
+      first_name: user.firstName,
+      last_name: user.lastName,
+      username: user.username,
+      email: user.email,
+      phone: user.phone ?? "",
+      role_name: user.role === "viewer" ? "viewer" : "receptionist",
+      status: user.status,
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const onUpdateSubmit = async (data: UpdateUserFormData) => {
+    if (!isAdmin) {
+      toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
+      return;
+    }
+
+    if (!editingUser) return;
+
+    try {
+      await updateUserMutation.mutateAsync({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        username: data.username,
+        email: data.email,
+        phone: data.phone,
+        role_name: data.role_name,
+        is_active: data.status === "active",
+      });
+      setIsEditModalOpen(false);
+      setEditingUser(null);
+    } catch {
+      // Error is handled by the mutation
+    }
+  };
+
   // Handle delete user
   const handleDeleteUser = async () => {
+    if (!isAdmin) {
+      toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
+      return;
+    }
+
     if (!deleteUserId) return;
 
     // Prevent deleting own account
@@ -190,10 +299,13 @@ export default function UserManagement() {
   // Get role badge
   const getRoleBadge = (role: RoleName) => {
     const colors: Record<RoleName, "primary" | "info" | "warning" | "success" | "default"> = {
-      manager: "primary",
-      cashier: "info",
-      inventory_manager: "warning",
-      sales_rep: "success",
+      admin: "primary",
+      principal: "primary",
+      vice_principal: "info",
+      teacher: "info",
+      accountant: "warning",
+      librarian: "success",
+      receptionist: "success",
       viewer: "default",
     };
     return <Badge variant={colors[role] || "default"}>{getRoleNameDisplay(role)}</Badge>;
@@ -222,11 +334,26 @@ export default function UserManagement() {
         title={t("mis.settings.userManagement", "User Management")}
         subtitle={t("mis.settings.userSubtitle", "Manage system users and their access permissions")}
         actions={
-          <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
-            {t("settings.addUser", "Add User")}
-          </Button>
+          isAdmin ? (
+            <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
+              {t("settings.addUser", "Add User")}
+            </Button>
+          ) : undefined
         }
       />
+
+      {!isAdmin && (
+        <Card>
+          <CardContent className="py-3">
+            <p className="text-sm text-text-secondary">
+              {t(
+                "settings.adminOnlyNotice",
+                "Only administrators can add, edit, or delete users. You can update your own profile from the profile page."
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -288,7 +415,7 @@ export default function UserManagement() {
                   ? t("settings.noUsersFound", "No users match your search")
                   : t("settings.noUsers", "No users found")}
               </p>
-              {!searchQuery && (
+              {!searchQuery && isAdmin && (
                 <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
                   {t("settings.addFirstUser", "Add First User")}
                 </Button>
@@ -332,6 +459,9 @@ export default function UserManagement() {
                                 {user.firstName} {user.lastName}
                               </p>
                               <p className="text-xs text-text-secondary">{user.email}</p>
+                              {user.phone && (
+                                <p className="text-xs text-text-secondary">{user.phone}</p>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -345,14 +475,17 @@ export default function UserManagement() {
                         <td className="px-4 py-4">
                           <div className="flex items-center justify-end gap-2">
                             <button
+                              onClick={() => openEditModal(user)}
                               className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                               title={t("settings.editUser", "Edit User")}
+                              disabled={!isAdmin || user.role === "admin"}
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               className="p-2 text-text-secondary hover:text-info hover:bg-info/10 rounded-lg transition-colors"
                               title={t("settings.managePermissions", "Manage Permissions")}
+                              disabled={!isAdmin}
                             >
                               <Shield className="h-4 w-4" />
                             </button>
@@ -360,7 +493,7 @@ export default function UserManagement() {
                               onClick={() => setDeleteUserId(user.id)}
                               className="p-2 text-text-secondary hover:text-error hover:bg-error/10 rounded-lg transition-colors"
                               title={t("settings.deleteUser", "Delete User")}
-                              disabled={Number(userProfile?.id) === user.id}
+                              disabled={!isAdmin || Number(userProfile?.id) === user.id}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -408,7 +541,7 @@ export default function UserManagement() {
       </Card>
 
       {/* Create User Modal */}
-      {isModalOpen && (
+      {isAdmin && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -452,9 +585,14 @@ export default function UserManagement() {
               <Input
                 type="email"
                 label={t("settings.email", "Email")}
-                placeholder={t("settings.emailPlaceholder", "user@school.edu")}
+                placeholder={t("settings.emailPlaceholder", "user@library.edu")}
                 error={errors.email?.message}
                 {...register("email")}
+              />
+              <Input
+                label={t("settings.phoneNumber", "Phone Number")}
+                placeholder={t("settings.phonePlaceholder", "+93 70 000 0000")}
+                {...register("phone")}
               />
 
               <Input
@@ -474,6 +612,23 @@ export default function UserManagement() {
                 {...register("password")}
               />
 
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                label={t("auth.confirmPassword", "Confirm Password")}
+                placeholder={t("auth.confirmPassword", "Confirm Password")}
+                error={errors.confirm_password?.message}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-muted hover:text-text-primary transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                }
+                {...register("confirm_password")}
+              />
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-text-primary">
                   {t("settings.role", "Role")}
@@ -482,7 +637,9 @@ export default function UserManagement() {
                   {...register("role_name")}
                   className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  {roles.map((role) => (
+                  {roles
+                    .filter((role) => creatableRoles.includes(role.name))
+                    .map((role) => (
                     <option key={role.name} value={role.name}>
                       {role.value}
                     </option>
@@ -492,6 +649,15 @@ export default function UserManagement() {
                   <p className="mt-1.5 text-sm text-error">{errors.role_name.message}</p>
                 )}
               </div>
+
+              <label className="flex items-center gap-2 text-sm text-text-primary">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border"
+                  {...register("send_verification_email")}
+                />
+                {t("settings.sendVerificationEmail", "Send verification email")}
+              </label>
 
               <div className="flex justify-end gap-3 pt-4">
                 <Button
@@ -513,8 +679,122 @@ export default function UserManagement() {
         </div>
       )}
 
+      {/* Edit User Modal */}
+      {isAdmin && isEditModalOpen && editingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-text-primary">
+                {t("settings.editUser", "Edit User")}
+              </h2>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingUser(null);
+                }}
+                className="p-2 text-text-secondary hover:text-text-primary rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitUpdate(onUpdateSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label={t("settings.firstName", "First Name")}
+                  placeholder={t("settings.firstNamePlaceholder", "Enter first name")}
+                  error={updateErrors.first_name?.message}
+                  {...registerUpdate("first_name")}
+                />
+                <Input
+                  label={t("settings.lastName", "Last Name")}
+                  placeholder={t("settings.lastNamePlaceholder", "Enter last name")}
+                  error={updateErrors.last_name?.message}
+                  {...registerUpdate("last_name")}
+                />
+              </div>
+
+              <Input
+                label={t("settings.username", "Username")}
+                placeholder={t("settings.usernamePlaceholder", "Enter username")}
+                error={updateErrors.username?.message}
+                {...registerUpdate("username")}
+              />
+
+              <Input
+                type="email"
+                label={t("settings.email", "Email")}
+                placeholder={t("settings.emailPlaceholder", "user@library.edu")}
+                error={updateErrors.email?.message}
+                {...registerUpdate("email")}
+              />
+              <Input
+                label={t("settings.phoneNumber", "Phone Number")}
+                placeholder={t("settings.phonePlaceholder", "+93 70 000 0000")}
+                {...registerUpdate("phone")}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
+                    {t("settings.role", "Role")}
+                  </label>
+                  <select
+                    {...registerUpdate("role_name")}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    {roles
+                      .filter((role) => creatableRoles.includes(role.name))
+                      .map((role) => (
+                        <option key={role.name} value={role.name}>
+                          {role.value}
+                        </option>
+                      ))}
+                  </select>
+                  {updateErrors.role_name && (
+                    <p className="mt-1.5 text-sm text-error">{updateErrors.role_name.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-text-primary">
+                    {t("settings.status", "Status")}
+                  </label>
+                  <select
+                    {...registerUpdate("status")}
+                    className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="active">{t("settings.active", "Active")}</option>
+                    <option value="inactive">{t("settings.inactive", "Inactive")}</option>
+                  </select>
+                  {updateErrors.status && (
+                    <p className="mt-1.5 text-sm text-error">{updateErrors.status.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingUser(null);
+                  }}
+                >
+                  {t("common.cancel", "Cancel")}
+                </Button>
+                <Button type="submit" loading={updateUserMutation.isPending}>
+                  {t("common.save", "Save Changes")}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Delete Confirmation Modal */}
-      {deleteUserId && (
+      {isAdmin && deleteUserId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-2">

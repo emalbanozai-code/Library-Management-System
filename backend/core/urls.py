@@ -6,6 +6,9 @@ app_name = 'core'
 
 router = DefaultRouter()
 router.register(r'settings', views.SettingsViewSet, basename='tenant-settings')
+router.register(r'settings/users', views.SettingsUsersViewSet, basename='settings-users')
+router.register(r'users', views.UsersViewSet, basename='users')
+router.register(r'notifications', views.NotificationViewSet, basename='notifications')
 
 urlpatterns = [
     path('', include(router.urls)),

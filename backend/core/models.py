@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 from core.image_path import settings_image_upload_path
@@ -116,3 +117,48 @@ class Permission(models.Model):
     
     def __str__(self):
         return self.codename
+
+
+class Notification(BaseModel):
+    TYPE_INFO = 'info'
+    TYPE_SUCCESS = 'success'
+    TYPE_WARNING = 'warning'
+    TYPE_ERROR = 'error'
+    TYPE_CHOICES = [
+        (TYPE_INFO, 'Info'),
+        (TYPE_SUCCESS, 'Success'),
+        (TYPE_WARNING, 'Warning'),
+        (TYPE_ERROR, 'Error'),
+    ]
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_notifications',
+    )
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(
+        max_length=20,
+        choices=TYPE_CHOICES,
+        default=TYPE_INFO,
+    )
+    is_read = models.BooleanField(default=False, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'notifications'
+        indexes = [
+            models.Index(fields=['recipient', 'is_read']),
+            models.Index(fields=['recipient', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} -> {self.recipient_id}"

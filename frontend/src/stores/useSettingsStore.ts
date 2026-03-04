@@ -6,6 +6,7 @@ import type {
   LogoSettings,
   Setting,
   ShopSettings,
+  SystemSettings,
 } from "../entities/Setting";
 
 interface SettingsState {
@@ -13,26 +14,31 @@ interface SettingsState {
   shopSettings: ShopSettings | null;
   emailSettings: EmailSettings | null;
   logoSettings: LogoSettings | null;
+  systemSettings: SystemSettings | null;
 
   // Loading states
   isLoadingShop: boolean;
   isLoadingEmail: boolean;
   isLoadingLogo: boolean;
+  isLoadingSystem: boolean;
 
   // Saving states
   isSavingShop: boolean;
   isSavingEmail: boolean;
   isSavingLogo: boolean;
+  isSavingSystem: boolean;
 
   // Actions
   setSettings: (setting: Setting) => void;
   fetchShopSettings: () => Promise<void>;
   fetchEmailSettings: () => Promise<void>;
   fetchLogoSettings: () => Promise<void>;
+  fetchSystemSettings: () => Promise<void>;
   fetchSettings: () => Promise<void>;
   updateShopSettings: (data: ShopSettings) => Promise<void>;
   updateEmailSettings: (data: EmailSettings) => Promise<void>;
   updateLogoSettings: (file: File) => Promise<void>;
+  updateSystemSettings: (data: SystemSettings) => Promise<void>;
   testEmailConfiguration: () => Promise<void>;
 }
 
@@ -43,18 +49,22 @@ export const useSettingsStore = create<SettingsState>()(
       shopSettings: null,
       emailSettings: null,
       logoSettings: null,
+      systemSettings: null,
       isLoadingShop: false,
       isLoadingEmail: false,
       isLoadingLogo: false,
+      isLoadingSystem: false,
       isSavingShop: false,
       isSavingEmail: false,
       isSavingLogo: false,
+      isSavingSystem: false,
 
-      setSettings({ shop_settings, logo_settings, email_settings }) {
+      setSettings({ shop_settings, logo_settings, email_settings, system_settings }) {
         set({
           shopSettings: shop_settings,
           emailSettings: email_settings,
           logoSettings: logo_settings,
+          systemSettings: system_settings ?? null,
         });
       },
       // Fetch shop settings
@@ -92,13 +102,29 @@ export const useSettingsStore = create<SettingsState>()(
           throw error;
         }
       },
-      fetchSettings() {
-        const { fetchShopSettings, fetchLogoSettings, fetchEmailSettings } =
+      fetchSystemSettings: async () => {
+        set({ isLoadingSystem: true });
+        try {
+          const response = await apiClient.get("/core/settings/system/");
+          set({ systemSettings: response.data, isLoadingSystem: false });
+        } catch (error) {
+          set({ isLoadingSystem: false });
+          throw error;
+        }
+      },
+      async fetchSettings() {
+        const {
+          fetchShopSettings,
+          fetchLogoSettings,
+          fetchEmailSettings,
+          fetchSystemSettings,
+        } =
           get();
-        return Promise.all([
+        await Promise.all([
           fetchShopSettings(),
           fetchLogoSettings(),
           fetchEmailSettings(),
+          fetchSystemSettings(),
         ]);
       },
 
@@ -145,6 +171,16 @@ export const useSettingsStore = create<SettingsState>()(
           set({ logoSettings: response.data, isSavingLogo: false });
         } catch (error) {
           set({ isSavingLogo: false });
+          throw error;
+        }
+      },
+      updateSystemSettings: async (data: SystemSettings) => {
+        set({ isSavingSystem: true });
+        try {
+          const response = await apiClient.put("/core/settings/system/", data);
+          set({ systemSettings: response.data, isSavingSystem: false });
+        } catch (error) {
+          set({ isSavingSystem: false });
           throw error;
         }
       },

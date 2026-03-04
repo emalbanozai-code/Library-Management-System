@@ -9,7 +9,7 @@ import {
 import NotFoundPage from "@/pages/PageNotFounded";
 import { MISLayout } from "@/components";
 import { Dashboard } from "@/modules/dashboard";
-import { GeneralSettings, SettingsOverview, UserManagement } from "@settings/index";
+import { GeneralSettings, SettingsOverview, SystemSettings, UserManagement } from "@settings/index";
 import { UserProfile } from "@/modules/profile";
 import {
   BookCategoriesListPage,
@@ -32,6 +32,7 @@ import { EmployeeDetailPage, EmployeeFormPage, EmployeesListPage } from "@/modul
 import { LendingDetailPage, LendingFormPage, LendingsListPage } from "@/modules/lending";
 import { ExpenseDetailPage, ExpenseFormPage, ExpensesListPage } from "@/modules/expenses";
 import { SystemReportPage } from "@/modules/reports";
+import { UsersPage } from "@/modules/users";
 
 function LegacyBookDetailRedirect() {
   const { id } = useParams();
@@ -101,10 +102,12 @@ function AppRouterProvider() {
         // Settings
         { path: "settings", element: <SettingsOverview /> },
         { path: "settings/general", element: <GeneralSettings /> },
+        { path: "settings/system", element: <SystemSettings /> },
         { path: "settings/users", element: <UserManagement /> },
 
         // Profile
         { path: "profile", element: <UserProfile /> },
+        { path: "users", element: <UsersPage /> },
 
         // Books
         { path: "books", element: <BooksListPage /> },
@@ -157,6 +160,12 @@ function AppRouterProvider() {
         { path: "mis/reports/students", element: <Navigate to="/reports" replace /> },
         { path: "mis/reports/attendance", element: <Navigate to="/reports" replace /> },
         { path: "mis/reports/financial", element: <Navigate to="/reports" replace /> },
+        { path: "mis/settings", element: <Navigate to="/settings" replace /> },
+        { path: "mis/settings/general", element: <Navigate to="/settings/general" replace /> },
+        { path: "mis/settings/system", element: <Navigate to="/settings/system" replace /> },
+        { path: "mis/settings/users", element: <Navigate to="/settings/users" replace /> },
+        { path: "mis/profile", element: <Navigate to="/profile" replace /> },
+        { path: "mis/users", element: <Navigate to="/users" replace /> },
         { path: "library/books", element: <Navigate to="/books" replace /> },
         { path: "library/books/new", element: <Navigate to="/books/new" replace /> },
         { path: "library/books/:id", element: <LegacyBookDetailRedirect /> },
@@ -165,6 +174,7 @@ function AppRouterProvider() {
         { path: "library/customers/new", element: <Navigate to="/customers/new" replace /> },
         { path: "library/customers/:id", element: <LegacyCustomerDetailRedirect /> },
         { path: "library/customers/:id/edit", element: <LegacyCustomerEditRedirect /> },
+        { path: "library/users", element: <Navigate to="/users" replace /> },
         { path: "library/sales", element: <Navigate to="/sales" replace /> },
         { path: "library/sales/new", element: <Navigate to="/sales/new" replace /> },
         { path: "library/sales/:id/edit", element: <LegacySaleEditRedirect /> },
