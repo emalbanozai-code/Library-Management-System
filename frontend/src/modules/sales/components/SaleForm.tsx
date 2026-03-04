@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import apiClient from '@/lib/api';
 import { Alert, Button, Card, CardContent, Input, Textarea } from '@/components/ui';
 import type { Book } from '@/modules/books/types/book';
+import { extractAxiosError } from '@/utils/extractError';
 
 import { useSaleTotals } from '../hooks/useSaleTotals';
 import { saleSchema } from '../schemas/saleSchema';
@@ -13,16 +15,35 @@ import SaleItemsEditor from './SaleItemsEditor';
 
 interface SaleFormProps {
   books: Book[];
-  customers: Customer[];
   onSubmit: (payload: CreateSalePayload) => Promise<void>;
   onViewHistory: (customerId: number) => void;
   saving?: boolean;
   submitLabel?: string;
 }
 
+interface CustomerFromCustomersModule {
+  id: number;
+  sales_customer_id?: number;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  is_active: boolean;
+  total_purchases: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PaginatedCustomersFromCustomersModule {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: CustomerFromCustomersModule[];
+}
+
 export default function SaleForm({
   books,
-  customers,
   onSubmit,
   onViewHistory,
   saving = false,
@@ -44,7 +65,54 @@ export default function SaleForm({
   } = useSaleDraftStore();
 
   const [formError, setFormError] = useState<string | null>(null);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customersLoadError, setCustomersLoadError] = useState<string | null>(null);
   const totals = useSaleTotals(items, discountPercent);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadCustomers = async () => {
+      try {
+        const response = await apiClient.get<PaginatedCustomersFromCustomersModule>('/customers/for-sales/', {
+          params: { page_size: 200, ordering: 'first_name' },
+        });
+
+        if (!active) {
+          return;
+        }
+
+        const normalizedCustomers: Customer[] = response.data.results.map((customer) => ({
+          id: customer.sales_customer_id ?? customer.id,
+          full_name: customer.full_name || `${customer.first_name} ${customer.last_name}`.trim(),
+          phone: customer.phone || '',
+          email: customer.email || '',
+          is_active: customer.is_active,
+          total_completed_sales: 0,
+          total_spent: customer.total_purchases || '0',
+          last_purchase_date: null,
+          notes: '',
+          created_at: customer.created_at,
+          updated_at: customer.updated_at,
+        }));
+
+        setCustomers(normalizedCustomers);
+        setCustomersLoadError(null);
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+        setCustomers([]);
+        setCustomersLoadError(extractAxiosError(error, 'Failed to load customers'));
+      }
+    };
+
+    loadCustomers();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const buildPayload = (): CreateSalePayload | null => {
     const payload: CreateSalePayload = {
@@ -77,6 +145,7 @@ export default function SaleForm({
     <Card>
       <CardContent className="space-y-6">
         {formError ? <Alert variant="error">{formError}</Alert> : null}
+        {customersLoadError ? <Alert variant="error">{customersLoadError}</Alert> : null}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Input

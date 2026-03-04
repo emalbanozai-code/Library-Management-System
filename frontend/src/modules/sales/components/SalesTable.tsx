@@ -22,7 +22,7 @@ export default function SalesTable({
   const columns: Column<Sale>[] = [
     {
       key: 'id',
-      header: 'Sale 💸',
+      header: 'Sale',
       label: 'Sale',
       sortable: true,
       render: (sale) => (
@@ -34,22 +34,40 @@ export default function SalesTable({
     },
     {
       key: 'customer_name',
-      header: 'Customer 🧑',
+      header: 'Customer',
       label: 'Customer',
       render: (sale) => sale.customer_name || 'Walk-in',
     },
     {
-      key: 'total_amount',
-      header: 'Total',
-      label: 'Total',
+      key: 'price',
+      header: 'Price',
+      label: 'Price',
       sortable: true,
-      render: (sale) => `Af ${Number(sale.total_amount).toFixed(2)}`,
+      render: (sale) => `Af ${Number(sale.price || sale.subtotal_amount).toFixed(2)}`,
+    },
+    {
+      key: 'quantity',
+      header: 'Quantity',
+      label: 'Quantity',
+      sortable: true,
+      render: (sale) =>
+        String(
+          sale.quantity ??
+            sale.items.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+        ),
     },
     {
       key: 'discount_amount',
       header: 'Discount',
       label: 'Discount',
       render: (sale) => `Af ${Number(sale.discount_amount).toFixed(2)} (${sale.discount_percent}%)`,
+    },
+    {
+      key: 'total_amount',
+      header: 'Total Amount',
+      label: 'Total Amount',
+      sortable: true,
+      render: (sale) => `Af ${Number(sale.total_amount).toFixed(2)}`,
     },
     {
       key: 'actions',

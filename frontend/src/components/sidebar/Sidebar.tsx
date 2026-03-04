@@ -9,6 +9,8 @@ import {
   Users,
   Handshake,
   Wallet,
+  List,
+  Tags,
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 import SidebarToggle from "./SidebarToggle";
@@ -35,6 +37,20 @@ export default function Sidebar() {
       path: "/books",
       label: "Books",
       icon: BookMarked,
+      subItems: [
+        {
+          id: "books-list",
+          path: "/books",
+          label: "List",
+          icon: List,
+        },
+        {
+          id: "books-category",
+          path: "/books/categories",
+          label: "Category",
+          icon: Tags,
+        },
+      ] as SubNavItem[],
     },
     {
       path: "/sales",
@@ -62,31 +78,9 @@ export default function Sidebar() {
       icon: Wallet,
     },
     {
-      path: "/mis/reports",
+      path: "/reports",
       label: "Reports",
       icon: FileText,
-      subItems: [
-        {
-          id: "reports-all",
-          path: "/mis/reports",
-          label: "All Reports",
-        },
-        {
-          id: "reports-students",
-          path: "/mis/reports/students",
-          label: "Student Reports",
-        },
-        {
-          id: "reports-attendance",
-          path: "/mis/reports/attendance",
-          label: "Attendance Reports",
-        },
-        {
-          id: "reports-financial",
-          path: "/mis/reports/financial",
-          label: "Financial Reports",
-        },
-      ] as SubNavItem[],
       divider: true,
     },
     {

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { bookKeys } from '@/modules/books/queries/bookKeys';
 import { extractAxiosError } from '@/utils/extractError';
 
 import { lendingKeys } from './lendingKeys';
@@ -32,6 +33,8 @@ export const useCreateLending = () => {
     onSuccess: () => {
       toast.success('Lending created successfully');
       queryClient.invalidateQueries({ queryKey: lendingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.details() });
     },
     onError: (error) => {
       toast.error(extractAxiosError(error, 'Failed to create lending'));
@@ -49,6 +52,8 @@ export const useUpdateLending = (id: number) => {
       toast.success('Lending updated successfully');
       queryClient.invalidateQueries({ queryKey: lendingKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: lendingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.details() });
     },
     onError: (error) => {
       toast.error(extractAxiosError(error, 'Failed to update lending'));
@@ -64,6 +69,8 @@ export const useDeleteLending = () => {
     onSuccess: () => {
       toast.success('Lending deleted successfully');
       queryClient.invalidateQueries({ queryKey: lendingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.details() });
     },
     onError: (error) => {
       toast.error(extractAxiosError(error, 'Failed to delete lending'));
@@ -81,6 +88,8 @@ export const useReturnLending = () => {
       toast.success('Book marked as returned');
       queryClient.invalidateQueries({ queryKey: lendingKeys.details() });
       queryClient.invalidateQueries({ queryKey: lendingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: bookKeys.details() });
     },
     onError: (error) => {
       toast.error(extractAxiosError(error, 'Failed to mark lending as returned'));

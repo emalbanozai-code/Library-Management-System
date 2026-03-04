@@ -91,14 +91,13 @@ class LendingViewSet(PermissionMixin, viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     def _apply_book_stock_delta(self, book: Book, delta: int):
-        next_available_quantity = book.available_quantity + delta
-        if next_available_quantity < 0:
-            raise ValidationError({'book': 'Selected book does not have enough available quantity.'})
-        if next_available_quantity > book.quantity:
-            next_available_quantity = book.quantity
+        next_quantity = book.quantity + delta
 
-        if next_available_quantity == book.available_quantity:
+        if next_quantity < 0:
+            raise ValidationError({'book': 'Selected book does not have enough quantity.'})
+
+        if next_quantity == book.quantity:
             return
 
-        book.available_quantity = next_available_quantity
-        book.save(update_fields=['available_quantity', 'updated_at'])
+        book.quantity = next_quantity
+        book.save(update_fields=['quantity', 'updated_at'])

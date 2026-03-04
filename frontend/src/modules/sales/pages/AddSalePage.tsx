@@ -8,7 +8,6 @@ import { useBooksList } from '@/modules/books/queries/useBookQueries';
 
 import SaleForm from '../components/SaleForm';
 import { useCreateSale, useSaleDetail, useUpdateSale } from '../queries/useSalesQueries';
-import { useCustomersList } from '../queries/useCustomersQueries';
 import { useSaleDraftStore } from '../stores/useSaleDraftStore';
 import type { CreateSalePayload } from '../types/sale';
 
@@ -35,7 +34,6 @@ export default function AddSalePage() {
   const isEditMode = Number.isFinite(parsedId);
 
   const { data: booksData, isLoading: loadingBooks } = useBooksList({ page_size: 200 });
-  const { data: customersData, isLoading: loadingCustomers } = useCustomersList({ page_size: 200 });
   const { data: sale, isLoading: loadingSale, isError: saleError } = useSaleDetail(parsedId, isEditMode);
 
   const createSale = useCreateSale();
@@ -44,7 +42,6 @@ export default function AddSalePage() {
   const resetDraft = useSaleDraftStore((state) => state.resetDraft);
 
   const books = booksData?.results || [];
-  const customers = customersData?.results || [];
 
   useEffect(() => {
     if (!isEditMode || !sale) {
@@ -94,7 +91,7 @@ export default function AddSalePage() {
     navigate('/sales');
   };
 
-  if (loadingBooks || loadingCustomers || (isEditMode && loadingSale)) {
+  if (loadingBooks || (isEditMode && loadingSale)) {
     return (
       <Card>
         <CardContent>{t('sales.loadingFormData')}</CardContent>
@@ -123,7 +120,6 @@ export default function AddSalePage() {
       />
       <SaleForm
         books={books}
-        customers={customers}
         onSubmit={handleSubmit}
         onViewHistory={(customerId) => navigate(`/sales/customers/${customerId}/purchase-history`)}
         saving={createSale.isPending || updateSale.isPending}

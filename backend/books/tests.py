@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from .models import Book
+from .models import Book, BookCategory
 
 
 class BookAPITestCase(APITestCase):
@@ -19,18 +19,19 @@ class BookAPITestCase(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.list_url = '/api/books/'
+        self.category_list_url = '/api/books/categories/'
         self.alias_list_url = '/api/library/books/'
+        self.default_category = BookCategory.objects.create(name='Software')
 
     def _book_payload(self, **overrides):
         payload = {
             'title': 'Clean Architecture',
             'author': 'Robert C. Martin',
             'isbn': '9780134494166',
-            'category': 'Software',
+            'category': self.default_category.id,
             'price': '49.99',
             'rentable': True,
             'quantity': 10,
-            'available_quantity': 8,
             'publisher': 'Pearson',
             'publish_date': '2017-09-20',
             'description': 'A handbook of software craftsmanship.',
@@ -39,15 +40,15 @@ class BookAPITestCase(APITestCase):
         return payload
 
     def _create_book(self, **overrides):
+        category = overrides.pop('category', None) or self.default_category
         data = {
             'title': 'Default Book',
             'author': 'Unknown Author',
             'isbn': f"ISBN-{Book.all_objects.count() + 1}",
-            'category': 'General',
+            'category': category,
             'price': Decimal('10.00'),
             'rentable': True,
             'quantity': 10,
-            'available_quantity': 10,
             'publisher': 'Default Publisher',
             'description': '',
         }
@@ -59,10 +60,22 @@ class BookAPITestCase(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['title'], 'Clean Architecture')
+        self.assertEqual(response.data['category_name'], 'Software')
         self.assertEqual(Book.objects.count(), 1)
 
     def test_create_fails_when_isbn_duplicate(self):
-        Book.objects.create(**self._book_payload())
+        Book.objects.create(
+            title='Clean Architecture',
+            author='Robert C. Martin',
+            isbn='9780134494166',
+            category=self.default_category,
+            price=Decimal('49.99'),
+            rentable=True,
+            quantity=10,
+            publisher='Pearson',
+            publish_date='2017-09-20',
+            description='A handbook of software craftsmanship.',
+        )
 
         response = self.client.post(
             self.list_url,
@@ -73,15 +86,39 @@ class BookAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('isbn', response.data)
 
-    def test_create_fails_when_available_quantity_exceeds_quantity(self):
+    def test_create_fails_when_quantity_negative(self):
         response = self.client.post(
             self.list_url,
-            self._book_payload(quantity=5, available_quantity=9),
+            self._book_payload(quantity=-1),
             format='json',
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('available_quantity', response.data)
+        self.assertIn('quantity', response.data)
+
+    def test_category_crud_success(self):
+        create_response = self.client.post(
+            self.category_list_url,
+            {'name': 'History', 'description': 'History books'},
+            format='json',
+        )
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        category_id = create_response.data['id']
+        list_response = self.client.get(self.category_list_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(list_response.data['count'], 2)
+
+        update_response = self.client.put(
+            f"{self.category_list_url}{category_id}/",
+            {'name': 'World History', 'description': 'Updated'},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(update_response.data['name'], 'World History')
+
+        delete_response = self.client.delete(f"{self.category_list_url}{category_id}/")
+        self.assertEqual(delete_response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_legacy_books_alias_works(self):
         response = self.client.post(self.alias_list_url, self._book_payload(), format='json')

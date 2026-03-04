@@ -1,13 +1,14 @@
-﻿import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Button, Card, CardContent, Input, Switch, Textarea } from '@/components/ui';
+import { Button, Card, CardContent, Input, Select, Switch, Textarea } from '@/components/ui';
 
 import { bookFormSchema } from '../schemas/bookSchema';
-import type { BookFormValues } from '../types/book';
+import type { BookCategory, BookFormValues } from '../types/book';
 
 interface BookFormProps {
+  categories: BookCategory[];
   initialValues?: Partial<BookFormValues>;
   onSubmit: (values: BookFormValues) => Promise<void> | void;
   onCancel: () => void;
@@ -23,13 +24,13 @@ const defaultValues: BookFormValues = {
   price: 0,
   rentable: true,
   quantity: 0,
-  available_quantity: 0,
   publisher: '',
   publish_date: '',
   description: '',
 };
 
 export default function BookForm({
+  categories,
   initialValues,
   onSubmit,
   onCancel,
@@ -59,6 +60,11 @@ export default function BookForm({
     });
   }, [initialValues, reset]);
 
+  const categoryOptions = useMemo(
+    () => categories.map((category) => ({ value: String(category.id), label: category.name })),
+    [categories]
+  );
+
   const submit = async (values: BookFormValues) => {
     await onSubmit(values);
   };
@@ -71,9 +77,11 @@ export default function BookForm({
             <Input label="Title" placeholder="Book title" {...register('title')} error={errors.title?.message} />
             <Input label="Author" placeholder="Author name" {...register('author')} error={errors.author?.message} />
             <Input label="ISBN" placeholder="ISBN" {...register('isbn')} error={errors.isbn?.message} />
-            <Input
+            <Select
               label="Category"
-              placeholder="Category"
+              options={categoryOptions}
+              placeholder="Select a category"
+              disabled={categoryOptions.length === 0}
               {...register('category')}
               error={errors.category?.message}
             />
@@ -99,13 +107,6 @@ export default function BookForm({
               label="Total Quantity"
               {...register('quantity', { valueAsNumber: true })}
               error={errors.quantity?.message}
-            />
-            <Input
-              type="number"
-              min="0"
-              label="Available Quantity"
-              {...register('available_quantity', { valueAsNumber: true })}
-              error={errors.available_quantity?.message}
             />
             <Input
               type="date"
@@ -149,4 +150,3 @@ export default function BookForm({
     </Card>
   );
 }
-

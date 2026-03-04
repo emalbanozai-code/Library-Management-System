@@ -37,6 +37,7 @@ export default function BookTable({ books, loading, onView, onEdit, onDelete }: 
       label: 'Category',
       header: 'Category',
       sortable: true,
+      render: (book) => book.category_name,
     },
     {
       key: 'price',
@@ -51,10 +52,8 @@ export default function BookTable({ books, loading, onView, onEdit, onDelete }: 
       header: 'Stock',
       render: (book) => (
         <div className="flex items-center gap-2">
-          <span>
-            {book.available_quantity}/{book.quantity}
-          </span>
-          {book.available_quantity > 0 ? (
+          <span>{book.quantity}</span>
+          {book.quantity > 0 ? (
             <Badge variant="success" size="sm" dot>
               In stock
             </Badge>

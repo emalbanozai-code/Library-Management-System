@@ -1,11 +1,16 @@
-﻿import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
 
 import BookForm from '../components/BookForm';
-import { useBookDetail, useCreateBook, useUpdateBook } from '../queries/useBookQueries';
+import {
+  useBookCategoriesList,
+  useBookDetail,
+  useCreateBook,
+  useUpdateBook,
+} from '../queries/useBookQueries';
 import type { BookFormValues } from '../types/book';
 
 export default function BookFormPage() {
@@ -14,6 +19,12 @@ export default function BookFormPage() {
 
   const parsedId = id ? Number(id) : NaN;
   const isEditMode = Number.isFinite(parsedId);
+
+  const { data: categoriesData, isLoading: isLoadingCategories } = useBookCategoriesList({
+    page_size: 200,
+    ordering: 'name',
+  });
+  const categories = categoriesData?.results ?? [];
 
   const { data: book, isLoading: isLoadingBook, isError } = useBookDetail(parsedId, isEditMode);
   const createBookMutation = useCreateBook();
@@ -24,11 +35,10 @@ export default function BookFormPage() {
         title: book.title,
         author: book.author,
         isbn: book.isbn,
-        category: book.category,
+        category: String(book.category),
         price: Number(book.price),
         rentable: book.rentable,
         quantity: book.quantity,
-        available_quantity: book.available_quantity,
         publisher: book.publisher,
         publish_date: book.publish_date || '',
         description: book.description || '',
@@ -67,6 +77,27 @@ export default function BookFormPage() {
     );
   }
 
+  if (isLoadingCategories) {
+    return (
+      <Card>
+        <CardContent>Loading categories...</CardContent>
+      </Card>
+    );
+  }
+
+  if (!categories.length) {
+    return (
+      <Card>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-error">At least one category is required before creating books.</p>
+          <Button variant="outline" onClick={() => navigate('/books/categories')}>
+            Manage Categories
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -83,6 +114,7 @@ export default function BookFormPage() {
       />
 
       <BookForm
+        categories={categories}
         initialValues={initialValues}
         onSubmit={handleSubmit}
         onCancel={() => navigate('/books')}
@@ -92,4 +124,3 @@ export default function BookFormPage() {
     </div>
   );
 }
-

@@ -80,7 +80,7 @@ export default function LendingForm({
               { value: '', label: 'Select book' },
               ...books.map((item) => ({
                 value: String(item.id),
-                label: `${item.title} (${item.available_quantity} available)`,
+                label: `${item.title} (${item.quantity} in stock)`,
               })),
             ]}
             value={book ? String(book) : ''}
@@ -159,4 +159,3 @@ export default function LendingForm({
     </Card>
   );
 }
-

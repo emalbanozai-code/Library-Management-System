@@ -1,9 +1,27 @@
 from rest_framework import serializers
 
-from .models import Book
+from .models import Book, BookCategory
+
+
+class BookCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BookCategory
+        fields = ['id', 'name', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_name(self, value):
+        normalized_name = value.strip()
+        queryset = BookCategory.objects.filter(name__iexact=normalized_name)
+        if self.instance:
+            queryset = queryset.exclude(id=self.instance.id)
+        if queryset.exists():
+            raise serializers.ValidationError('Category with this name already exists.')
+        return normalized_name
 
 
 class BookSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
     class Meta:
         model = Book
         fields = [
@@ -12,37 +30,26 @@ class BookSerializer(serializers.ModelSerializer):
             'author',
             'isbn',
             'category',
+            'category_name',
             'price',
             'rentable',
             'quantity',
-            'available_quantity',
             'publisher',
             'publish_date',
             'description',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at'] # داهغه څه دي چی انپوټ فیلډ نه لري خو کله چی ډیتاذخیره کړودابه ښودل کیږي
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
-    def validate_price(self, value): # دغه اول دفنکشنی نوم دی دوهم بیا دفیلډ نوم دی دوه پارامیټره لري که چی هغه ولیو چی موږیی دپرایس په فیلد کی ورکوو هغهد صفرڅخه کوچنی وه دغه دلاندې میسیج راکړه
+    def validate_price(self, value):
         if value < 0:
             raise serializers.ValidationError('Price cannot be negative.')
         return value
 
     def validate(self, attrs):
         quantity = attrs.get('quantity', getattr(self.instance, 'quantity', 0))
-        available_quantity = attrs.get('available_quantity', getattr(self.instance, 'available_quantity', 0))
-
-        if available_quantity < 0:
-            raise serializers.ValidationError({'available_quantity': 'Available quantity cannot be negative.'})
 
         if quantity < 0:
             raise serializers.ValidationError({'quantity': 'Quantity cannot be negative.'})
-
-        if available_quantity > quantity:
-            raise serializers.ValidationError(
-                {'available_quantity': 'Available quantity cannot exceed total quantity.'}
-            )
-        # attrs['description'] = 'This is one description'
         return attrs
-

@@ -63,6 +63,8 @@ class SaleItemReadSerializer(serializers.ModelSerializer):
 
 class SaleSerializer(serializers.ModelSerializer):
     customer_name = serializers.CharField(source='customer.full_name', read_only=True)
+    price = serializers.DecimalField(source='subtotal_amount', max_digits=12, decimal_places=2, read_only=True)
+    quantity = serializers.SerializerMethodField()
     discount_percent = serializers.DecimalField(
         max_digits=5,
         decimal_places=2,
@@ -79,6 +81,8 @@ class SaleSerializer(serializers.ModelSerializer):
             'sale_date',
             'customer',
             'customer_name',
+            'price',
+            'quantity',
             'subtotal_amount',
             'discount_percent',
             'discount_amount',
@@ -91,12 +95,17 @@ class SaleSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'customer_name',
+            'price',
+            'quantity',
             'subtotal_amount',
             'discount_amount',
             'total_amount',
             'created_at',
             'updated_at',
         ]
+
+    def get_quantity(self, obj):
+        return sum((item.quantity for item in obj.items.all()), start=0)
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

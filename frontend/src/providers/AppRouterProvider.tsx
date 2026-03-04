@@ -11,7 +11,13 @@ import { MISLayout } from "@/components";
 import { Dashboard } from "@/modules/dashboard";
 import { GeneralSettings, SettingsOverview, UserManagement } from "@settings/index";
 import { UserProfile } from "@/modules/profile";
-import { BookDetailPage, BookFormPage, BooksListPage } from "@/modules/books";
+import {
+  BookCategoriesListPage,
+  BookCategoryFormPage,
+  BookDetailPage,
+  BookFormPage,
+  BooksListPage,
+} from "@/modules/books";
 import {
   AddSalePage,
   CustomerPurchaseHistoryPage,
@@ -25,6 +31,7 @@ import {
 import { EmployeeDetailPage, EmployeeFormPage, EmployeesListPage } from "@/modules/employees";
 import { LendingDetailPage, LendingFormPage, LendingsListPage } from "@/modules/lending";
 import { ExpenseDetailPage, ExpenseFormPage, ExpensesListPage } from "@/modules/expenses";
+import { SystemReportPage } from "@/modules/reports";
 
 function LegacyBookDetailRedirect() {
   const { id } = useParams();
@@ -89,7 +96,8 @@ function AppRouterProvider() {
       errorElement: <NotFoundPage />,
       children: [
         // Dashboard
-        { index: true, element: <Dashboard /> },
+        { index: true, element: <Navigate to="/mis" replace /> },
+        { path: "mis", element: <Dashboard /> },
         // Settings
         { path: "settings", element: <SettingsOverview /> },
         { path: "settings/general", element: <GeneralSettings /> },
@@ -103,6 +111,9 @@ function AppRouterProvider() {
         { path: "books/new", element: <BookFormPage /> },
         { path: "books/:id", element: <BookDetailPage /> },
         { path: "books/:id/edit", element: <BookFormPage /> },
+        { path: "books/categories", element: <BookCategoriesListPage /> },
+        { path: "books/categories/new", element: <BookCategoryFormPage /> },
+        { path: "books/categories/:id/edit", element: <BookCategoryFormPage /> },
 
         // Sales
         { path: "sales", element: <SalesListPage /> },
@@ -138,7 +149,14 @@ function AppRouterProvider() {
         { path: "expenses/:id", element: <ExpenseDetailPage /> },
         { path: "expenses/:id/edit", element: <ExpenseFormPage /> },
 
+        // Reports
+        { path: "reports", element: <SystemReportPage /> },
+
         // Legacy aliases
+        { path: "mis/reports", element: <Navigate to="/reports" replace /> },
+        { path: "mis/reports/students", element: <Navigate to="/reports" replace /> },
+        { path: "mis/reports/attendance", element: <Navigate to="/reports" replace /> },
+        { path: "mis/reports/financial", element: <Navigate to="/reports" replace /> },
         { path: "library/books", element: <Navigate to="/books" replace /> },
         { path: "library/books/new", element: <Navigate to="/books/new" replace /> },
         { path: "library/books/:id", element: <LegacyBookDetailRedirect /> },

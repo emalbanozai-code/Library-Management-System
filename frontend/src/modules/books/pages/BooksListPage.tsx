@@ -1,4 +1,4 @@
-﻿import { Plus, RefreshCw, Search } from 'lucide-react';
+import { Plus, RefreshCw, Search } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,7 @@ import {
 
 import BookTable from '../components/BookTable';
 import { useBookFilters } from '../hooks/useBookFilters';
-import { useBooksList, useDeleteBook } from '../queries/useBookQueries';
+import { useBookCategoriesList, useBooksList, useDeleteBook } from '../queries/useBookQueries';
 import type { Book } from '../types/book';
 
 export default function BooksListPage() {
@@ -25,16 +25,17 @@ export default function BooksListPage() {
   const { t } = useTranslation();
   const { filters, params, updateFilter, setPage, clearFilters } = useBookFilters();
   const { data, isLoading, isError, refetch } = useBooksList(params);
+  const { data: categoryData } = useBookCategoriesList({ page_size: 200, ordering: 'name' });
   const deleteBookMutation = useDeleteBook();
 
   const books = data?.results ?? [];
+  const categories = categoryData?.results ?? [];
   const totalCount = data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / filters.pageSize));
 
   const categoryOptions: SelectOption[] = useMemo(() => {
-    const categories = Array.from(new Set(books.map((book) => book.category))).sort();
-    return categories.map((category) => ({ label: category, value: category }));
-  }, [books]);
+    return categories.map((category) => ({ label: category.name, value: String(category.id) }));
+  }, [categories]);
 
   const handleDelete = async (book: Book) => {
     const confirmed = window.confirm(t('book.deleteConfirm', { title: book.title }));

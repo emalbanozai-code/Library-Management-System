@@ -39,12 +39,11 @@ export default function BookDetailCard({
       />
       <CardContent>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <DetailItem label="Category" value={book.category} />
+          <DetailItem label="Category" value={book.category_name} />
           <DetailItem label="Publisher" value={book.publisher || 'N/A'} />
           <DetailItem label="Price" value={`$${Number(book.price).toFixed(2)}`} />
           <DetailItem label="Publish Date" value={book.publish_date || 'N/A'} />
           <DetailItem label="Quantity" value={String(book.quantity)} />
-          <DetailItem label="Available Quantity" value={String(book.available_quantity)} />
           <DetailItem
             label="Rentable"
             value={
@@ -56,8 +55,8 @@ export default function BookDetailCard({
           <DetailItem
             label="Availability"
             value={
-              <Badge variant={book.available_quantity > 0 ? 'success' : 'error'}>
-                {book.available_quantity > 0 ? 'In stock' : 'Out of stock'}
+              <Badge variant={book.quantity > 0 ? 'success' : 'error'}>
+                {book.quantity > 0 ? 'In stock' : 'Out of stock'}
               </Badge>
             }
           />

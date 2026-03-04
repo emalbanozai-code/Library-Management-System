@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from books.models import Book
+from books.models import Book, BookCategory
 from customers.models import Customer
 from .models import Lending
 
@@ -23,27 +23,26 @@ class LendingAPITestCase(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.list_url = '/api/lending/'
+        self.category = BookCategory.objects.create(name='General')
 
         self.book_one = Book.objects.create(
             title='Lending Book One',
             author='Author One',
             isbn='LENDING-BOOK-1',
-            category='General',
+            category=self.category,
             price=Decimal('10.00'),
             rentable=True,
             quantity=5,
-            available_quantity=2,
             publisher='Publisher One',
         )
         self.book_two = Book.objects.create(
             title='Lending Book Two',
             author='Author Two',
             isbn='LENDING-BOOK-2',
-            category='General',
+            category=self.category,
             price=Decimal('12.00'),
             rentable=True,
             quantity=5,
-            available_quantity=3,
             publisher='Publisher Two',
         )
         self.customer = Customer.objects.create(
@@ -85,11 +84,11 @@ class LendingAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['status'], Lending.STATUS_NOT_RETURNED)
         self.book_one.refresh_from_db()
-        self.assertEqual(self.book_one.available_quantity, 1)
+        self.assertEqual(self.book_one.quantity, 4)
 
     def test_create_lending_fails_when_book_not_available(self):
-        self.book_one.available_quantity = 0
-        self.book_one.save(update_fields=['available_quantity'])
+        self.book_one.quantity = 0
+        self.book_one.save(update_fields=['quantity'])
 
         response = self.client.post(self.list_url, self._payload(), format='json')
 
@@ -101,8 +100,8 @@ class LendingAPITestCase(APITestCase):
         lending = self._create_lending()
         self.book_one.refresh_from_db()
         self.book_two.refresh_from_db()
-        self.assertEqual(self.book_one.available_quantity, 1)
-        self.assertEqual(self.book_two.available_quantity, 3)
+        self.assertEqual(self.book_one.quantity, 4)
+        self.assertEqual(self.book_two.quantity, 5)
 
         response = self.client.put(
             f"{self.list_url}{lending['id']}/",
@@ -113,8 +112,8 @@ class LendingAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.book_one.refresh_from_db()
         self.book_two.refresh_from_db()
-        self.assertEqual(self.book_one.available_quantity, 2)
-        self.assertEqual(self.book_two.available_quantity, 2)
+        self.assertEqual(self.book_one.quantity, 5)
+        self.assertEqual(self.book_two.quantity, 4)
 
     def test_mark_as_returned_updates_status_fine_and_stock(self):
         today = timezone.localdate()
@@ -137,7 +136,7 @@ class LendingAPITestCase(APITestCase):
         self.assertGreaterEqual(Decimal(response.data['fine_amount']), Decimal('60.00'))
 
         self.book_one.refresh_from_db()
-        self.assertEqual(self.book_one.available_quantity, 2)
+        self.assertEqual(self.book_one.quantity, 5)
 
     def test_delete_not_returned_lending_restores_stock_and_soft_deletes(self):
         lending = self._create_lending()
@@ -148,7 +147,7 @@ class LendingAPITestCase(APITestCase):
         self.assertFalse(Lending.objects.filter(id=lending['id']).exists())
         self.assertTrue(Lending.all_objects.filter(id=lending['id']).exists())
         self.book_one.refresh_from_db()
-        self.assertEqual(self.book_one.available_quantity, 2)
+        self.assertEqual(self.book_one.quantity, 5)
 
     def test_lending_filters_work(self):
         today = timezone.localdate()

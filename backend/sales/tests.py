@@ -4,7 +4,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from books.models import Book
+from books.models import Book, BookCategory
 from .models import Customer, Sale
 
 
@@ -22,25 +22,24 @@ class SalesAPITestCase(APITestCase):
 
         self.sales_url = '/api/sales/'
         self.customers_url = '/api/sales/customers/'
+        self.category = BookCategory.objects.create(name='Test')
 
         self.book_one = Book.objects.create(
             title='Book One',
             author='Author One',
             isbn='BOOK-1',
-            category='Test',
+            category=self.category,
             price=Decimal('20.00'),
             quantity=50,
-            available_quantity=50,
             publisher='Test Publisher',
         )
         self.book_two = Book.objects.create(
             title='Book Two',
             author='Author Two',
             isbn='BOOK-2',
-            category='Test',
+            category=self.category,
             price=Decimal('30.00'),
             quantity=30,
-            available_quantity=30,
             publisher='Test Publisher',
         )
 

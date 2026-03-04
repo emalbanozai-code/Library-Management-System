@@ -1,15 +1,23 @@
-﻿export interface Book {
+export interface Book {
   id: number;
   title: string;
   author: string;
   isbn: string;
-  category: string;
+  category: number;
+  category_name: string;
   price: string;
   rentable: boolean;
   quantity: number;
-  available_quantity: number;
   publisher: string;
   publish_date: string | null;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BookCategory {
+  id: number;
+  name: string;
   description: string;
   created_at: string;
   updated_at: string;
@@ -29,6 +37,13 @@ export interface BookListParams {
   ordering?: string;
 }
 
+export interface BookCategoryListParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  ordering?: string;
+}
+
 export interface BookFormValues {
   title: string;
   author: string;
@@ -37,9 +52,13 @@ export interface BookFormValues {
   price: number;
   rentable: boolean;
   quantity: number;
-  available_quantity: number;
   publisher: string;
   publish_date: string;
+  description: string;
+}
+
+export interface BookCategoryFormValues {
+  name: string;
   description: string;
 }
 
@@ -50,3 +69,9 @@ export interface PaginatedBooksResponse {
   results: Book[];
 }
 
+export interface PaginatedBookCategoriesResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: BookCategory[];
+}

@@ -20,6 +20,8 @@ export interface Sale {
   sale_date: string;
   customer: number | null;
   customer_name: string | null;
+  price: string;
+  quantity: number;
   subtotal_amount: string;
   discount_percent: string;
   discount_amount: string;

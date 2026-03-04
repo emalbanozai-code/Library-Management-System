@@ -20,6 +20,7 @@ export const permissions = [
 export type Permission = (typeof permissions)[number]["name"];
 
 export const routePermissions: Record<string, Permission | Permission[]> = {
+  "/": "dashboard",
   "/mis": "dashboard",
   "/mis/attendance": "attendance",
   "/mis/attendance/mark": "attendance",
@@ -76,6 +77,7 @@ export const routePermissions: Record<string, Permission | Permission[]> = {
   "/library/customers/:id": "customers",
   "/library/customers/:id/edit": "customers",
   "/library/customers/:id/purchase-history": "sales",
+  "/reports": "reports",
   "/mis/reports": "reports",
   "/mis/parents": "parents",
   "/mis/parents/:id": "parents",

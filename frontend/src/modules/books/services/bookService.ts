@@ -1,13 +1,18 @@
-﻿import apiClient from '@/lib/api';
+import apiClient from '@/lib/api';
 
 import type {
   Book,
+  BookCategory,
+  BookCategoryFormValues,
+  BookCategoryListParams,
   BookFormValues,
   BookListParams,
+  PaginatedBookCategoriesResponse,
   PaginatedBooksResponse,
 } from '../types/book';
 
 const BOOKS_ENDPOINT = '/books/';
+const BOOK_CATEGORIES_ENDPOINT = '/books/categories/';
 
 export const bookService = {
   getBooks: (params?: BookListParams) =>
@@ -28,7 +33,19 @@ export const bookService = {
     }),
 
   deleteBook: (id: number) => apiClient.delete(`${BOOKS_ENDPOINT}${id}/`),
+
+  getBookCategories: (params?: BookCategoryListParams) =>
+    apiClient.get<PaginatedBookCategoriesResponse>(BOOK_CATEGORIES_ENDPOINT, { params }),
+
+  getBookCategory: (id: number) => apiClient.get<BookCategory>(`${BOOK_CATEGORIES_ENDPOINT}${id}/`),
+
+  createBookCategory: (data: BookCategoryFormValues) =>
+    apiClient.post<BookCategory>(BOOK_CATEGORIES_ENDPOINT, data),
+
+  updateBookCategory: (id: number, data: BookCategoryFormValues) =>
+    apiClient.put<BookCategory>(`${BOOK_CATEGORIES_ENDPOINT}${id}/`, data),
+
+  deleteBookCategory: (id: number) => apiClient.delete(`${BOOK_CATEGORIES_ENDPOINT}${id}/`),
 };
 
 export default bookService;
-

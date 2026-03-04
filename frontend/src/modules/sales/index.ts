@@ -1,4 +1,4 @@
-﻿export { default as SalesTable } from './components/SalesTable';
+export { default as SalesTable } from './components/SalesTable';
 export { default as SaleForm } from './components/SaleForm';
 export { default as SaleItemsEditor } from './components/SaleItemsEditor';
 export { default as CustomerSelector } from './components/CustomerSelector';
