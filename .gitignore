@@ -29,3 +29,12 @@ dist-ssr
 **/prompts/
 
 feedbacks/
+
+# Environment and deployment artifacts
+.env
+.env.*
+**/.env
+**/.env.*
+!*.env.example
+!**/.env.example
+backend/staticfiles/

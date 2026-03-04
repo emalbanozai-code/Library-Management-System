@@ -17,7 +17,17 @@ const clearAccessToken = (): void => {
   sessionStorage.removeItem("accessToken");
 };
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api";
+type RuntimeConfigWindow = Window & {
+  __APP_CONFIG__?: {
+    VITE_API_BASE_URL?: string;
+  };
+};
+
+const runtimeConfig = (window as RuntimeConfigWindow).__APP_CONFIG__;
+const API_BASE_URL =
+  runtimeConfig?.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000/api";
 
 // Create axios instance with default config
 export const apiClient = axios.create({

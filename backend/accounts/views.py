@@ -2,7 +2,9 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
 from django.utils import timezone
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import update_session_auth_hash
@@ -265,13 +267,16 @@ class AuthViewSet(viewsets.ViewSet):
         })
 
         # ✅ Set httpOnly cookie for refresh token
+        cookie_domain = settings.REFRESH_COOKIE_DOMAIN or None
         res.set_cookie(
-            key="refresh_token",
+            key=settings.REFRESH_COOKIE_NAME,
             value=refresh_token,
-            httponly=True,
-            secure=True,  # Use False if not using HTTPS in dev
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60  # 7 days
+            httponly=settings.REFRESH_COOKIE_HTTPONLY,
+            secure=settings.REFRESH_COOKIE_SECURE,
+            samesite=settings.REFRESH_COOKIE_SAMESITE,
+            domain=cookie_domain,
+            path=settings.REFRESH_COOKIE_PATH,
+            max_age=settings.REFRESH_COOKIE_MAX_AGE,
         )
 
         return res
@@ -280,12 +285,17 @@ class AuthViewSet(viewsets.ViewSet):
     def logout(self, request):
         """User logout"""
         try:
-            refresh_token = request.COOKIES.get("refresh_token")
+            refresh_token = request.COOKIES.get(settings.REFRESH_COOKIE_NAME)
             token = RefreshToken(refresh_token)
             token.blacklist()
 
             response = Response({"detail": "Logged out"})
-            response.delete_cookie("refresh_token")
+            cookie_domain = settings.REFRESH_COOKIE_DOMAIN or None
+            response.delete_cookie(
+                settings.REFRESH_COOKIE_NAME,
+                domain=cookie_domain,
+                path=settings.REFRESH_COOKIE_PATH,
+            )
             return response
         except Exception:
             return Response({"detail": "Invalid token"}, status=400)
@@ -709,8 +719,6 @@ class ActivityLogViewSet(PermissionMixin, viewsets.ReadOnlyModelViewSet):
         
   
 from rest_framework_simplejwt.views import TokenRefreshView
-from rest_framework.response import Response
-from rest_framework import status
 
 class CookieTokenRefreshView(TokenRefreshView):
     """
@@ -718,7 +726,7 @@ class CookieTokenRefreshView(TokenRefreshView):
     Also, sets the new rotated refresh token in the cookie.
     """
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get("refresh_token")
+        refresh_token = request.COOKIES.get(settings.REFRESH_COOKIE_NAME)
         if not refresh_token:
             return Response({"detail": "Refresh token not found in cookie."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -739,13 +747,16 @@ class CookieTokenRefreshView(TokenRefreshView):
         res = Response({"access": access_token, "message": "Token refreshed successfully"})
 
         # ✅ Set the new refresh token in the httpOnly cookie
+        cookie_domain = settings.REFRESH_COOKIE_DOMAIN or None
         res.set_cookie(
-            key="refresh_token",
+            key=settings.REFRESH_COOKIE_NAME,
             value=new_refresh_token,
-            httponly=True,
-            secure=True,  # Set to False if not using HTTPS in development
-            samesite="Lax",
-            max_age=7 * 24 * 60 * 60  # Should match REFRESH_TOKEN_LIFETIME
+            httponly=settings.REFRESH_COOKIE_HTTPONLY,
+            secure=settings.REFRESH_COOKIE_SECURE,
+            samesite=settings.REFRESH_COOKIE_SAMESITE,
+            domain=cookie_domain,
+            path=settings.REFRESH_COOKIE_PATH,
+            max_age=settings.REFRESH_COOKIE_MAX_AGE,
         )
         
         return res
