@@ -41,6 +41,20 @@ export default function SalesTable({
       render: (sale) => sale.customer_name || 'Walk-in',
     },
     {
+      key: 'books',
+      header: 'Books',
+      label: 'Books',
+      render: (sale) => {
+        const titles = sale.items
+          .map((item) => item.book_title || item.book_title_snapshot)
+          .filter(Boolean);
+        if (!titles.length) {
+          return 'N/A';
+        }
+        return titles.join(', ');
+      },
+    },
+    {
       key: 'price',
       header: 'Price',
       label: 'Price',
