@@ -6,6 +6,7 @@ import {
   LogOut,
   BookMarked,
   ShoppingCart,
+  IdCard,
   User,
   Users,
   Handshake,
@@ -13,6 +14,7 @@ import {
   List,
   Tags,
   ImageIcon,
+  UserPlus,
 } from "lucide-react";
 import SidebarItem from "./SidebarItem";
 import SidebarToggle from "./SidebarToggle";
@@ -72,7 +74,7 @@ export default function Sidebar() {
     {
       path: "/employees",
       label: "Employees",
-      icon: ShoppingCart,
+      icon: IdCard,
     },
     {
       path: "/customers",
@@ -83,6 +85,21 @@ export default function Sidebar() {
       path: "/users",
       label: "User",
       icon: User,
+      subItems: [
+        {
+          id: "users-list",
+          path: "/users",
+          label: "List",
+          icon: List,
+        },
+        {
+          id: "users-add",
+          path: "/users/new",
+          label: "Add",
+          icon: UserPlus,
+          quickAction: true,
+        },
+      ] as SubNavItem[],
     },
     {
       path: "/lending",

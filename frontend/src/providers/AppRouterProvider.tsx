@@ -32,7 +32,7 @@ import { EmployeeDetailPage, EmployeeFormPage, EmployeesListPage } from "@/modul
 import { LendingDetailPage, LendingFormPage, LendingsListPage } from "@/modules/lending";
 import { ExpenseDetailPage, ExpenseFormPage, ExpensesListPage } from "@/modules/expenses";
 import { SystemReportPage } from "@/modules/reports";
-import { UsersPage } from "@/modules/users";
+import { UsersAddPage, UsersPage } from "@/modules/users";
 
 function LegacyBookDetailRedirect() {
   const { id } = useParams();
@@ -108,6 +108,7 @@ function AppRouterProvider() {
         // Profile
         { path: "profile", element: <UserProfile /> },
         { path: "users", element: <UsersPage /> },
+        { path: "users/new", element: <UsersAddPage /> },
 
         // Books
         { path: "books", element: <BooksListPage /> },
@@ -166,6 +167,7 @@ function AppRouterProvider() {
         { path: "mis/settings/users", element: <Navigate to="/settings/users" replace /> },
         { path: "mis/profile", element: <Navigate to="/profile" replace /> },
         { path: "mis/users", element: <Navigate to="/users" replace /> },
+        { path: "mis/users/new", element: <Navigate to="/users/new" replace /> },
         { path: "library/books", element: <Navigate to="/books" replace /> },
         { path: "library/books/new", element: <Navigate to="/books/new" replace /> },
         { path: "library/books/:id", element: <LegacyBookDetailRedirect /> },
@@ -175,6 +177,7 @@ function AppRouterProvider() {
         { path: "library/customers/:id", element: <LegacyCustomerDetailRedirect /> },
         { path: "library/customers/:id/edit", element: <LegacyCustomerEditRedirect /> },
         { path: "library/users", element: <Navigate to="/users" replace /> },
+        { path: "library/users/new", element: <Navigate to="/users/new" replace /> },
         { path: "library/sales", element: <Navigate to="/sales" replace /> },
         { path: "library/sales/new", element: <Navigate to="/sales/new" replace /> },
         { path: "library/sales/:id/edit", element: <LegacySaleEditRedirect /> },

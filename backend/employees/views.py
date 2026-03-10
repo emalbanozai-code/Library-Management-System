@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.notification_events import notify_employee_created
 from core.pagination import StandardResultsSetPagination
 from core.permissions import PermissionMixin
 
@@ -40,6 +41,10 @@ class EmployeeViewSet(PermissionMixin, viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return EmployeeDetailSerializer
         return EmployeeWriteSerializer
+
+    def perform_create(self, serializer):
+        employee = serializer.save()
+        notify_employee_created(employee, actor=self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

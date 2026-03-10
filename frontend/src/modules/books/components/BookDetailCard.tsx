@@ -6,9 +6,10 @@ import type { Book } from '../types/book';
 interface BookDetailCardProps {
   book: Book;
   onBack: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   deleting?: boolean;
+  canManage?: boolean;
 }
 
 export default function BookDetailCard({
@@ -17,6 +18,7 @@ export default function BookDetailCard({
   onEdit,
   onDelete,
   deleting = false,
+  canManage = false,
 }: BookDetailCardProps) {
   return (
     <Card>
@@ -28,12 +30,16 @@ export default function BookDetailCard({
             <Button variant="outline" onClick={onBack}>
               Back
             </Button>
-            <Button variant="outline" onClick={onEdit}>
-              Edit
-            </Button>
-            <Button variant="danger" onClick={onDelete} loading={deleting}>
-              Delete
-            </Button>
+            {canManage && onEdit ? (
+              <Button variant="outline" onClick={onEdit}>
+                Edit
+              </Button>
+            ) : null}
+            {canManage && onDelete ? (
+              <Button variant="danger" onClick={onDelete} loading={deleting}>
+                Delete
+              </Button>
+            ) : null}
           </div>
         }
       />

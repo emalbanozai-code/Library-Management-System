@@ -61,15 +61,28 @@ class CustomerAPITestCase(APITestCase):
         self.assertEqual(response.data['count'], 1)
         self.assertEqual(response.data['results'][0]['first_name'], 'Alice')
 
-    def test_customers_permission_required_for_non_superuser(self):
+    def test_non_admin_can_view_and_create_but_cannot_update_or_delete(self):
         limited_user = User.objects.create_user(
             username='customers_limited',
             email='customers_limited@example.com',
             password='TestPass123!',
             role_name='viewer',
         )
+        customer = Customer.objects.create(**self._payload(first_name='Existing', email='existing@example.com'))
         self.client.force_authenticate(user=limited_user)
 
-        response = self.client.get(self.list_url)
-        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+        list_response = self.client.get(self.list_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
 
+        create_response = self.client.post(self.list_url, self._payload(email='new@example.com'), format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        update_response = self.client.patch(
+            f"{self.list_url}{customer.id}/",
+            {'first_name': 'Updated'},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        delete_response = self.client.delete(f"{self.list_url}{customer.id}/")
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)

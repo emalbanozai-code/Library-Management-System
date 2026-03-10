@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 import { useBooksList } from '@/modules/books/queries/useBookQueries';
 
 import SaleForm from '../components/SaleForm';
@@ -29,9 +30,14 @@ export default function AddSalePage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const parsedId = id ? Number(id) : NaN;
   const isEditMode = Number.isFinite(parsedId);
+
+  if (isEditMode && !canManageRecords) {
+    return <Navigate to="/sales" replace />;
+  }
 
   const { data: booksData, isLoading: loadingBooks } = useBooksList({ page_size: 200 });
   const { data: sale, isLoading: loadingSale, isError: saleError } = useSaleDetail(parsedId, isEditMode);

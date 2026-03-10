@@ -7,9 +7,10 @@ import type { Sale } from '../types/sale';
 interface SalesTableProps {
   sales: Sale[];
   loading?: boolean;
-  onEdit: (sale: Sale) => void;
-  onDelete: (sale: Sale) => void;
+  onEdit?: (sale: Sale) => void;
+  onDelete?: (sale: Sale) => void;
   onViewCustomerHistory: (customerId: number) => void;
+  canManage?: boolean;
 }
 
 export default function SalesTable({
@@ -18,6 +19,7 @@ export default function SalesTable({
   onEdit,
   onDelete,
   onViewCustomerHistory,
+  canManage = false,
 }: SalesTableProps) {
   const columns: Column<Sale>[] = [
     {
@@ -80,12 +82,16 @@ export default function SalesTable({
               <Eye className="h-4 w-4" />
             </Button>
           ) : null}
-          <Button size="sm" variant="ghost" onClick={() => onEdit(sale)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDelete(sale)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage && onEdit ? (
+            <Button size="sm" variant="ghost" onClick={() => onEdit(sale)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage && onDelete ? (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(sale)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       ),
     },

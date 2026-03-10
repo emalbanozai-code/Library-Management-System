@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import BookDetailCard from '../components/BookDetailCard';
 import { useBookDetail, useDeleteBook } from '../queries/useBookQueries';
@@ -10,6 +11,7 @@ import { useBookDetail, useDeleteBook } from '../queries/useBookQueries';
 export default function BookDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const bookId = Number(id);
   const { data: book, isLoading, isError } = useBookDetail(bookId, Number.isFinite(bookId));
@@ -62,22 +64,26 @@ export default function BookDetailPage() {
             variant: 'outline',
             onClick: () => navigate('/books'),
           },
-          {
-            label: 'Edit',
-            icon: <Pencil className="h-4 w-4" />,
-            onClick: () => navigate(`/books/${book.id}/edit`),
-          },
+          ...(canManageRecords
+            ? [
+                {
+                  label: 'Edit',
+                  icon: <Pencil className="h-4 w-4" />,
+                  onClick: () => navigate(`/books/${book.id}/edit`),
+                },
+              ]
+            : []),
         ]}
       />
 
       <BookDetailCard
         book={book}
         onBack={() => navigate('/books')}
-        onEdit={() => navigate(`/books/${book.id}/edit`)}
-        onDelete={handleDelete}
+        onEdit={canManageRecords ? () => navigate(`/books/${book.id}/edit`) : undefined}
+        onDelete={canManageRecords ? handleDelete : undefined}
         deleting={deleteBookMutation.isPending}
+        canManage={canManageRecords}
       />
     </div>
   );
 }
-

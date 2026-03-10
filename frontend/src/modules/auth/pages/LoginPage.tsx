@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -7,7 +7,7 @@ import {
   Eye,
   EyeOff,
   LogIn,
-  GraduationCap,
+  BookOpen,
   AlertCircle,
   Lock,
 } from "lucide-react";
@@ -104,20 +104,16 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo and Title */}
         <div className="mb-8 text-center">
-          <div className="mb-4 flex justify-center">
+        <div className="mb-4 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-white shadow-lg">
-              <GraduationCap className="h-8 w-8" />
+              <BookOpen className="h-8 w-8" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary">
-            {t("branding.schoolName", "Su")}
-          </h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            {t("auth.subtitle", "School Management System")}
-          </p>
+          <h1 className="text-2xl font-bold text-text-primary">Emal Banozai</h1>
+          <p className="mt-1 text-sm text-text-secondary">Library Management System</p>
         </div>
 
-        {/* Login Card */}ltan Zoy
+        {/* Login Card */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-xl">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-text-primary">
@@ -237,7 +233,7 @@ export default function LoginPage() {
             <p>
               {t("auth.needHelp", "Need help?")}{" "}
               <a
-                href="mailto:support@school.edu"
+                href="mailto:support@library.edu"
                 className="font-medium text-primary hover:underline"
               >
                 {t("auth.contactSupport", "Contact Support")}
@@ -250,10 +246,12 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-xs text-text-secondary">
           {t(
             "footer.copyright",
-            "© 2025 Library managment system  all functionalities."
+            "© 2025 Library Management System. All rights reserved."
           )}
         </p>
       </div>
     </div>
   );
 }
+
+

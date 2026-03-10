@@ -170,7 +170,7 @@ class LendingAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
 
-    def test_lending_permission_required_for_non_superuser(self):
+    def test_non_admin_can_view_and_create_but_cannot_update_delete_or_return(self):
         limited_user = User.objects.create_user(
             username='lending_limited',
             email='lending_limited@example.com',
@@ -179,5 +179,26 @@ class LendingAPITestCase(APITestCase):
         )
         self.client.force_authenticate(user=limited_user)
 
-        response = self.client.get(self.list_url)
-        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+        list_response = self.client.get(self.list_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+
+        create_response = self.client.post(self.list_url, self._payload(), format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        lending_id = create_response.data['id']
+        update_response = self.client.patch(
+            f"{self.list_url}{lending_id}/",
+            {'payment_status': Lending.PAYMENT_STATUS_PAID},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        return_response = self.client.post(
+            f"{self.list_url}{lending_id}/return/",
+            {'payment_status': Lending.PAYMENT_STATUS_PAID},
+            format='json',
+        )
+        self.assertEqual(return_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        delete_response = self.client.delete(f"{self.list_url}{lending_id}/")
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)

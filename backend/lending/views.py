@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from books.models import Book
+from core.notification_events import notify_book_stock_transition
 from core.pagination import StandardResultsSetPagination
 from core.permissions import PermissionMixin
 
@@ -91,6 +92,7 @@ class LendingViewSet(PermissionMixin, viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     def _apply_book_stock_delta(self, book: Book, delta: int):
+        previous_quantity = book.quantity
         next_quantity = book.quantity + delta
 
         if next_quantity < 0:
@@ -101,3 +103,8 @@ class LendingViewSet(PermissionMixin, viewsets.ModelViewSet):
 
         book.quantity = next_quantity
         book.save(update_fields=['quantity', 'updated_at'])
+        notify_book_stock_transition(
+            book,
+            previous_quantity=previous_quantity,
+            actor=getattr(self.request, 'user', None),
+        )

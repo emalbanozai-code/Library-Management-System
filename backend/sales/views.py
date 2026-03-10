@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.notification_events import notify_sale_created
 from core.pagination import StandardResultsSetPagination
 from core.permissions import PermissionMixin
 
@@ -93,6 +94,7 @@ class SaleViewSet(PermissionMixin, viewsets.ModelViewSet):
         sale = serializer.save()
         if sale.customer_id:
             recalculate_customer_aggregates(sale.customer)
+        notify_sale_created(sale, actor=self.request.user)
 
     def perform_update(self, serializer):
         previous_customer_id = serializer.instance.customer_id

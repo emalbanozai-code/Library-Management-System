@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input, Pagination, PaginationInfo, Select } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import SalesTable from '../components/SalesTable';
 import { useSaleFilters } from '../hooks/useSaleFilters';
@@ -14,6 +15,7 @@ import type { Sale } from '../types/sale';
 export default function SalesListPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const { filters, params, updateFilter, setPage, clearFilters } = useSaleFilters();
   const { data, isLoading, isError, refetch } = useSalesList(params);
@@ -127,9 +129,10 @@ export default function SalesListPage() {
           <SalesTable
             sales={sales}
             loading={isLoading}
-            onEdit={(sale) => navigate(`/sales/${sale.id}/edit`)}
-            onDelete={handleDelete}
+            onEdit={canManageRecords ? (sale) => navigate(`/sales/${sale.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
             onViewCustomerHistory={(customerId) => navigate(`/sales/customers/${customerId}/purchase-history`)}
+            canManage={canManageRecords}
           />
 
           {!isLoading && totalCount > 0 ? (

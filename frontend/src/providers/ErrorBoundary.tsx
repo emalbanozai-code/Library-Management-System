@@ -128,7 +128,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             <p className="mt-8 text-sm text-text-secondary">
               If the problem persists, please{" "}
               <a
-                href="mailto:support@school.edu"
+                href="mailto:support@library.edu"
                 className="text-primary hover:underline"
               >
                 contact support

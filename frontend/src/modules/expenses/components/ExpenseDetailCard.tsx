@@ -6,9 +6,10 @@ import ExpenseCategoryBadge from './ExpenseCategoryBadge';
 interface ExpenseDetailCardProps {
   expense: Expense;
   onBack: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   deleting?: boolean;
+  canManage?: boolean;
 }
 
 export default function ExpenseDetailCard({
@@ -17,6 +18,7 @@ export default function ExpenseDetailCard({
   onEdit,
   onDelete,
   deleting = false,
+  canManage = false,
 }: ExpenseDetailCardProps) {
   return (
     <Card>
@@ -39,12 +41,16 @@ export default function ExpenseDetailCard({
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button variant="outline" onClick={onEdit}>
-            Edit
-          </Button>
-          <Button variant="danger" onClick={onDelete} loading={deleting}>
-            Delete
-          </Button>
+          {canManage && onEdit ? (
+            <Button variant="outline" onClick={onEdit}>
+              Edit
+            </Button>
+          ) : null}
+          {canManage && onDelete ? (
+            <Button variant="danger" onClick={onDelete} loading={deleting}>
+              Delete
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>
@@ -59,4 +65,3 @@ function Field({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

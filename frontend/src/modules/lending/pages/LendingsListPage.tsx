@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input, Pagination, PaginationInfo, Select } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 import { useBooksList } from '@/modules/books/queries/useBookQueries';
 import { useCustomersList } from '@/modules/customers/queries/useCustomerQueries';
 
@@ -13,6 +14,7 @@ import type { Lending } from '../types/lending';
 
 export default function LendingsListPage() {
   const navigate = useNavigate();
+  const { canManageRecords } = useRecordManagementAccess();
   const { filters, params, updateFilter, setPage, clearFilters } = useLendingFilters();
   const { data, isLoading, isError, refetch } = useLendingsList(params);
   const { data: booksData } = useBooksList({ page_size: 200 });
@@ -159,9 +161,10 @@ export default function LendingsListPage() {
             lendings={lendings}
             loading={isLoading}
             onView={(lending) => navigate(`/lending/${lending.id}`)}
-            onEdit={(lending) => navigate(`/lending/${lending.id}/edit`)}
-            onDelete={handleDelete}
-            onReturn={handleReturn}
+            onEdit={canManageRecords ? (lending) => navigate(`/lending/${lending.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
+            onReturn={canManageRecords ? handleReturn : undefined}
+            canManage={canManageRecords}
           />
 
           {!isLoading && totalCount > 0 ? (
@@ -175,4 +178,3 @@ export default function LendingsListPage() {
     </div>
   );
 }
-

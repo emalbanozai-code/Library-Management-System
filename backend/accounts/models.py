@@ -8,6 +8,7 @@ from django.contrib.auth.models import UserManager as BaseUserManager
 
 ROLE_CHOICES = [
     ("admin", "Administrator" ),
+    ("user_creator", "User Creator"),
     ("receptionist", "Receptionist" ),
     ("viewer", "Viewer" ),
 ]

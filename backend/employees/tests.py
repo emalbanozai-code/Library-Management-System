@@ -34,7 +34,7 @@ class EmployeeAPITestCase(APITestCase):
             'work_days': ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
             'join_date': '2024-01-01',
             'membership_type': 'permanent',
-            'role': 'staff',
+            'role': 'receptionist',
             'status': 'active',
             'username': 'john.doe',
             'password': 'StrongPass123!',
@@ -56,7 +56,7 @@ class EmployeeAPITestCase(APITestCase):
             username='john.doe',
             email='another@example.com',
             password='Pass12345!',
-            role_name='staff',
+            role_name='receptionist',
         )
         response = self.client.post(self.list_url, self._payload(), format='json')
 
@@ -68,7 +68,7 @@ class EmployeeAPITestCase(APITestCase):
             username='another.user',
             email='john.doe@example.com',
             password='Pass12345!',
-            role_name='staff',
+            role_name='receptionist',
         )
         response = self.client.post(self.list_url, self._payload(), format='json')
 
@@ -81,7 +81,7 @@ class EmployeeAPITestCase(APITestCase):
 
         response = self.client.patch(
             f'{self.list_url}{employee_id}/',
-            {'role': 'manager', 'status': 'inactive', 'salary': '750.00'},
+            {'role': 'viewer', 'status': 'inactive', 'salary': '750.00'},
             format='json',
         )
 
@@ -89,7 +89,7 @@ class EmployeeAPITestCase(APITestCase):
         employee = Employee.objects.get(id=employee_id)
         self.assertEqual(employee.status, Employee.STATUS_INACTIVE)
         self.assertEqual(employee.salary, Decimal('750.00'))
-        self.assertEqual(employee.user.role_name, 'manager')
+        self.assertEqual(employee.user.role_name, 'viewer')
         self.assertFalse(employee.user.is_active)
 
     def test_activate_and_deactivate_actions(self):
@@ -163,7 +163,7 @@ class EmployeeAPITestCase(APITestCase):
             username='employee_limited',
             email='employee_limited@example.com',
             password='TestPass123!',
-            role_name='staff',
+            role_name='receptionist',
         )
         self.client.force_authenticate(user=limited_user)
 

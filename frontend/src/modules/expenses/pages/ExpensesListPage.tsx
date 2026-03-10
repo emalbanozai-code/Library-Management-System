@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input, Pagination, PaginationInfo, Select } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 import { useEmployeesList } from '@/modules/employees/queries/useEmployeeQueries';
 
 import ExpenseTable from '../components/ExpenseTable';
@@ -12,6 +13,7 @@ import { expenseCategoryOptions, type Expense } from '../types/expense';
 
 export default function ExpensesListPage() {
   const navigate = useNavigate();
+  const { canManageRecords } = useRecordManagementAccess();
   const { filters, params, updateFilter, setPage, clearFilters } = useExpenseFilters();
   const { data, isLoading, isError, refetch } = useExpensesList(params);
   const { data: employeesData } = useEmployeesList({ page_size: 200 });
@@ -141,8 +143,9 @@ export default function ExpensesListPage() {
             expenses={expenses}
             loading={isLoading}
             onView={(expense) => navigate(`/expenses/${expense.id}`)}
-            onEdit={(expense) => navigate(`/expenses/${expense.id}/edit`)}
-            onDelete={handleDelete}
+            onEdit={canManageRecords ? (expense) => navigate(`/expenses/${expense.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
+            canManage={canManageRecords}
           />
           {!isLoading && totalCount > 0 ? (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -155,4 +158,3 @@ export default function ExpensesListPage() {
     </div>
   );
 }
-

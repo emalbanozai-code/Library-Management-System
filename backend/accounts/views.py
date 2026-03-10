@@ -379,7 +379,7 @@ class AuthViewSet(viewsets.ViewSet):
                 text_content = f'Your password reset verification code is: {verification_code}\n\nThis code will expire in 15 minutes.\n\nIf you did not request this, please ignore this email.'
 
                 email = EmailMultiAlternatives(
-                    subject='Password Reset Verification Code - School MIS',
+                    subject='Password Reset Verification Code - Library MIS',
                     body=text_content,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[user.email]
@@ -584,7 +584,7 @@ class AuthViewSet(viewsets.ViewSet):
             user.save(update_fields=['email_verification_token', 'email_verification_sent_at'])
 
             # Send email with HTML template
-            verification_url = f"{settings.FRONTEND_URL}/mis/verify-email/{token}"
+            verification_url = f"{settings.FRONTEND_URL}/auth/verify-email/{token}"
             context = {
                 'user': user,
                 'verification_url': verification_url,
@@ -596,7 +596,7 @@ class AuthViewSet(viewsets.ViewSet):
                 text_content = f'Click the link below to verify your email:\n\n{verification_url}\n\nThis link will expire in 24 hours.'
 
                 email_msg = EmailMultiAlternatives(
-                    subject='Email Verification - School MIS',
+                    subject='Email Verification - Library MIS',
                     body=text_content,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[user.email]

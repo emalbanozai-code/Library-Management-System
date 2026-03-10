@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import LendingDetailCard from '../components/LendingDetailCard';
 import { useDeleteLending, useLendingDetail, useReturnLending } from '../queries/useLendingQueries';
@@ -9,6 +10,7 @@ import { useDeleteLending, useLendingDetail, useReturnLending } from '../queries
 export default function LendingDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const lendingId = Number(id);
   const isValidId = Number.isFinite(lendingId);
@@ -75,13 +77,13 @@ export default function LendingDetailPage() {
       <LendingDetailCard
         lending={lending}
         onBack={() => navigate('/lending')}
-        onEdit={() => navigate(`/lending/${lending.id}/edit`)}
-        onDelete={handleDelete}
-        onReturn={handleReturn}
+        onEdit={canManageRecords ? () => navigate(`/lending/${lending.id}/edit`) : undefined}
+        onDelete={canManageRecords ? handleDelete : undefined}
+        onReturn={canManageRecords ? handleReturn : undefined}
         deleting={deleteLending.isPending}
         returning={returnLending.isPending}
+        canManage={canManageRecords}
       />
     </div>
   );
 }
-

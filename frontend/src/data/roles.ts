@@ -1,6 +1,7 @@
 // MIS Roles
 export const roles = [
   { name: "admin", value: "Administrator" },
+  { name: "user_creator", value: "User Creator" },
   { name: "principal", value: "Principal" },
   { name: "vice_principal", value: "Vice Principal" },
   { name: "teacher", value: "Teacher" },

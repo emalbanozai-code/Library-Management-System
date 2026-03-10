@@ -1,6 +1,43 @@
 from rest_framework import permissions
 from django.core.exceptions import PermissionDenied
 
+READ_CREATE_ONLY_MODULES = {'books', 'sales', 'customers', 'lending', 'expenses'}
+
+
+def _resolve_permission_action(request, view, permission_action):
+    if permission_action and permission_action != 'auto':
+        return permission_action
+
+    action_name = getattr(view, 'action', None)
+    if action_name == 'list' or action_name == 'retrieve':
+        return 'view'
+    if action_name == 'create':
+        return 'add'
+    if action_name == 'update' or action_name == 'partial_update':
+        return 'change'
+    if action_name == 'destroy':
+        return 'delete'
+
+    if request.method in permissions.SAFE_METHODS:
+        return 'view'
+
+    # Treat custom mutating actions as changes by default.
+    if action_name:
+        if request.method == 'POST':
+            return 'change'
+        if request.method == 'DELETE':
+            return 'delete'
+        return 'change'
+
+    action_map = {
+        'GET': 'view',
+        'POST': 'add',
+        'PUT': 'change',
+        'PATCH': 'change',
+        'DELETE': 'delete',
+    }
+    return action_map.get(request.method, 'view')
+
 
 class IsSelfOrHasPermission(permissions.BasePermission):
     """
@@ -28,17 +65,8 @@ class IsSelfOrHasPermission(permissions.BasePermission):
         
         if not permission_module or not permission_action:
             return True
-        # Map HTTP methods to actions if not explicitly set
-        if permission_action == 'auto':
-            action_map = {
-                'GET': 'view',
-                'POST': 'add',
-                'PUT': 'change',
-                'PATCH': 'change',
-                'DELETE': 'delete',
-            }
-            permission_action = action_map.get(request.method, 'view')
-        
+        permission_action = _resolve_permission_action(request, view, permission_action)
+
                 
         # Check if user has the permission through their roles
         return _user_has_permission(request.user, permission_module, permission_action)
@@ -70,17 +98,8 @@ class HasModulePermission(permissions.BasePermission):
             # If no specific permission is required, just check tenant access
             # return hasattr(request.user, 'tenant_id') and request.user.tenant_id
         
-        # Map HTTP methods to actions if not explicitly set
-        if not permission_action or permission_action == 'auto':
-            action_map = {
-                'GET': 'view',
-                'POST': 'add',
-                'PUT': 'change',
-                'PATCH': 'change',
-                'DELETE': 'delete',
-            }
-            permission_action = action_map.get(request.method, 'view')
-        
+        permission_action = _resolve_permission_action(request, view, permission_action)
+
                 
         # Check if user has the permission through their roles
         return _user_has_permission(request.user, permission_module, permission_action)
@@ -194,8 +213,12 @@ def _user_has_permission(user, permission_module, permission_action):
     )
     if override.exists():
         if override.count() > 1:
-            override = override.filter(permission_action='all')
+            override = override.filter(permission__action='all')
         return override.first().allow
+
+    if permission_module in READ_CREATE_ONLY_MODULES:
+        return permission_action in {'view', 'add'}
+
     try:
         # Get user's roles and check permissions
         role_name = user.role_name

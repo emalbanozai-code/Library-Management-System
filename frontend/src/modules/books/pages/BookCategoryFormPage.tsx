@@ -1,8 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import BookCategoryForm from '../components/BookCategoryForm';
 import {
@@ -15,9 +16,14 @@ import type { BookCategoryFormValues } from '../types/book';
 export default function BookCategoryFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const parsedId = id ? Number(id) : NaN;
   const isEditMode = Number.isFinite(parsedId);
+
+  if (isEditMode && !canManageRecords) {
+    return <Navigate to="/books/categories" replace />;
+  }
 
   const {
     data: category,

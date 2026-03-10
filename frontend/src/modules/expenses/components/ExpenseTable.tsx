@@ -9,11 +9,19 @@ interface ExpenseTableProps {
   expenses: Expense[];
   loading?: boolean;
   onView: (expense: Expense) => void;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit?: (expense: Expense) => void;
+  onDelete?: (expense: Expense) => void;
+  canManage?: boolean;
 }
 
-export default function ExpenseTable({ expenses, loading, onView, onEdit, onDelete }: ExpenseTableProps) {
+export default function ExpenseTable({
+  expenses,
+  loading,
+  onView,
+  onEdit,
+  onDelete,
+  canManage = false,
+}: ExpenseTableProps) {
   const columns: Column<Expense>[] = [
     {
       key: 'title',
@@ -62,12 +70,16 @@ export default function ExpenseTable({ expenses, loading, onView, onEdit, onDele
           <Button size="sm" variant="ghost" onClick={() => onView(expense)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onEdit(expense)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDelete(expense)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage && onEdit ? (
+            <Button size="sm" variant="ghost" onClick={() => onEdit(expense)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage && onDelete ? (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(expense)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       ),
     },
@@ -86,4 +98,3 @@ export default function ExpenseTable({ expenses, loading, onView, onEdit, onDele
     </Card>
   );
 }
-

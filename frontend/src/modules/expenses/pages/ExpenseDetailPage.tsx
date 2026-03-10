@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import ExpenseDetailCard from '../components/ExpenseDetailCard';
 import { useDeleteExpense, useExpenseDetail } from '../queries/useExpenseQueries';
@@ -9,6 +10,7 @@ import { useDeleteExpense, useExpenseDetail } from '../queries/useExpenseQueries
 export default function ExpenseDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const expenseId = Number(id);
   const isValidId = Number.isFinite(expenseId);
@@ -64,11 +66,11 @@ export default function ExpenseDetailPage() {
       <ExpenseDetailCard
         expense={expense}
         onBack={() => navigate('/expenses')}
-        onEdit={() => navigate(`/expenses/${expense.id}/edit`)}
-        onDelete={handleDelete}
+        onEdit={canManageRecords ? () => navigate(`/expenses/${expense.id}/edit`) : undefined}
+        onDelete={canManageRecords ? handleDelete : undefined}
         deleting={deleteExpense.isPending}
+        canManage={canManageRecords}
       />
     </div>
   );
 }
-

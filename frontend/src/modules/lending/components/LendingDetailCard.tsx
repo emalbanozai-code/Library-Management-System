@@ -5,12 +5,13 @@ import { LendingPaymentStatusBadge, LendingStatusBadge } from './LendingStatusBa
 
 interface LendingDetailCardProps {
   lending: Lending;
-  onEdit: () => void;
-  onDelete: () => void;
-  onReturn: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onReturn?: () => void;
   onBack: () => void;
   deleting?: boolean;
   returning?: boolean;
+  canManage?: boolean;
 }
 
 export default function LendingDetailCard({
@@ -21,6 +22,7 @@ export default function LendingDetailCard({
   onBack,
   deleting = false,
   returning = false,
+  canManage = false,
 }: LendingDetailCardProps) {
   const rows = [
     ['Book', lending.book_title],
@@ -57,20 +59,23 @@ export default function LendingDetailCard({
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button variant="outline" onClick={onEdit}>
-            Edit
-          </Button>
-          {lending.status === 'not_returned' ? (
+          {canManage && onEdit ? (
+            <Button variant="outline" onClick={onEdit}>
+              Edit
+            </Button>
+          ) : null}
+          {canManage && onReturn && lending.status === 'not_returned' ? (
             <Button variant="outline" onClick={onReturn} loading={returning}>
               Mark Returned
             </Button>
           ) : null}
-          <Button variant="danger" onClick={onDelete} loading={deleting}>
-            Delete
-          </Button>
+          {canManage && onDelete ? (
+            <Button variant="danger" onClick={onDelete} loading={deleting}>
+              Delete
+            </Button>
+          ) : null}
         </div>
       </CardContent>
     </Card>
   );
 }
-

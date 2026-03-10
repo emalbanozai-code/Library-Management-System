@@ -33,9 +33,11 @@ from .serializers import (
     NotificationSerializer, NotificationCreateSerializer
 )
 from .permissions import (
-    
-    CanAccessSettings, PermissionMixin
+    _user_has_permission,
+    CanAccessSettings,
+    PermissionMixin
 )
+from .notification_events import ensure_runtime_notifications_for_user
 
 
 class SettingsViewSet(PermissionMixin, viewsets.ViewSet):
@@ -200,9 +202,21 @@ class SettingsUsersViewSet(PermissionMixin, viewsets.ModelViewSet):
             status=status.HTTP_403_FORBIDDEN,
         )
 
+    def _create_required_response(self):
+        return Response(
+            {"detail": "You do not have permission to create users."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    def _can_create_user(self, user):
+        if self._is_admin_user(user):
+            return True
+        permission_module = getattr(self, 'permission_module', None) or 'users'
+        return _user_has_permission(user, permission_module, 'add')
+
     def create(self, request, *args, **kwargs):
-        if not self._is_admin_user(request.user):
-            return self._admin_required_response()
+        if not self._can_create_user(request.user):
+            return self._create_required_response()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -253,6 +267,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_queryset(self):
+        ensure_runtime_notifications_for_user(self.request.user)
         return Notification.objects.filter(recipient=self.request.user).order_by('-created_at')
 
     def get_serializer_class(self):

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input, Pagination, PaginationInfo, Select } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import CustomerTable from '../components/CustomerTable';
 import { useCustomerFilters } from '../hooks/useCustomerFilters';
@@ -11,6 +12,7 @@ import type { Customer } from '../types/customer';
 
 export default function CustomersListPage() {
   const navigate = useNavigate();
+  const { canManageRecords } = useRecordManagementAccess();
   const { filters, params, updateFilter, setPage, clearFilters } = useCustomerFilters();
   const { data, isLoading, isError, refetch } = useCustomersList(params);
   const deleteCustomerMutation = useDeleteCustomer();
@@ -115,8 +117,9 @@ export default function CustomersListPage() {
             customers={customers}
             loading={isLoading}
             onView={(customer) => navigate(`/customers/${customer.id}`)}
-            onEdit={(customer) => navigate(`/customers/${customer.id}/edit`)}
-            onDelete={handleDelete}
+            onEdit={canManageRecords ? (customer) => navigate(`/customers/${customer.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
+            canManage={canManageRecords}
           />
 
           {!isLoading && totalCount > 0 && (
@@ -130,4 +133,3 @@ export default function CustomersListPage() {
     </div>
   );
 }
-

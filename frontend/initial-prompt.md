@@ -5,7 +5,7 @@ for frontend i want to use react query, axios, zod, react-hook-form, zustand (if
 
 it is an school system which has the public website content for advertising and social communication, and management part which has scheduals, attendance, teacher student parent portals and other things.
 
-school name: Sultan Zoy High School
+school name: Emal Banozai High School
 
 first i want to make the front end public website content which is relatively easier.
 
@@ -114,7 +114,7 @@ these are the existing colors i am using. you can use them like that or if you w
 **************
 this is a very brief requirements of the project, you can add other details if you feel suitable.
 
-Recommended Sections for the School Website (Sultan Zoy High School)
+Recommended Sections for the School Website (Emal Banozai High School)
 1. Home Page
 - Welcome message and a brief introduction of the school.
 - Attractive photos and videos of the school environment, classrooms, and learning activities.
@@ -226,3 +226,4 @@ Navbar, Footer, CTASection, PageHeader and others which can be imported from com
 now i want you to make the career oportunities section good.
 
 if you have any question or do not understand any part, tell me, if no then go.
+

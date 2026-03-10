@@ -9,9 +9,10 @@ interface LendingTableProps {
   lendings: Lending[];
   loading?: boolean;
   onView: (lending: Lending) => void;
-  onEdit: (lending: Lending) => void;
-  onDelete: (lending: Lending) => void;
-  onReturn: (lending: Lending) => void;
+  onEdit?: (lending: Lending) => void;
+  onDelete?: (lending: Lending) => void;
+  onReturn?: (lending: Lending) => void;
+  canManage?: boolean;
 }
 
 export default function LendingTable({
@@ -21,6 +22,7 @@ export default function LendingTable({
   onEdit,
   onDelete,
   onReturn,
+  canManage = false,
 }: LendingTableProps) {
   const columns: Column<Lending>[] = [
     {
@@ -87,17 +89,21 @@ export default function LendingTable({
           <Button size="sm" variant="ghost" onClick={() => onView(lending)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onEdit(lending)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          {lending.status === 'not_returned' ? (
+          {canManage && onEdit ? (
+            <Button size="sm" variant="ghost" onClick={() => onEdit(lending)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage && onReturn && lending.status === 'not_returned' ? (
             <Button size="sm" variant="ghost" onClick={() => onReturn(lending)}>
               <CheckCircle2 className="h-4 w-4" />
             </Button>
           ) : null}
-          <Button size="sm" variant="ghost" onClick={() => onDelete(lending)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage && onDelete ? (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(lending)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       ),
     },
@@ -116,4 +122,3 @@ export default function LendingTable({
     </Card>
   );
 }
-

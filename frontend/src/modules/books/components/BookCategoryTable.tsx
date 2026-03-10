@@ -7,8 +7,9 @@ import type { BookCategory } from '../types/book';
 interface BookCategoryTableProps {
   categories: BookCategory[];
   loading?: boolean;
-  onEdit: (category: BookCategory) => void;
-  onDelete: (category: BookCategory) => void;
+  onEdit?: (category: BookCategory) => void;
+  onDelete?: (category: BookCategory) => void;
+  canManage?: boolean;
 }
 
 export default function BookCategoryTable({
@@ -16,6 +17,7 @@ export default function BookCategoryTable({
   loading,
   onEdit,
   onDelete,
+  canManage = false,
 }: BookCategoryTableProps) {
   const columns: Column<BookCategory>[] = [
     {
@@ -37,7 +39,10 @@ export default function BookCategoryTable({
       sortable: true,
       render: (category) => new Date(category.created_at).toLocaleDateString(),
     },
-    {
+  ];
+
+  if (canManage && onEdit && onDelete) {
+    columns.push({
       key: 'actions',
       label: 'Actions',
       header: 'Actions',
@@ -51,8 +56,8 @@ export default function BookCategoryTable({
           </Button>
         </div>
       ),
-    },
-  ];
+    });
+  }
 
   return (
     <Card padding="none">

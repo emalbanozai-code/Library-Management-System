@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import CustomerDetailCard from '../components/CustomerDetailCard';
 import { useCustomerDetail, useDeleteCustomer } from '../queries/useCustomerQueries';
@@ -10,6 +11,7 @@ import { useCustomerDetail, useDeleteCustomer } from '../queries/useCustomerQuer
 export default function CustomerDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const customerId = Number(id);
   const { data: customer, isLoading, isError } = useCustomerDetail(
@@ -65,22 +67,26 @@ export default function CustomerDetailPage() {
             variant: 'outline',
             onClick: () => navigate('/customers'),
           },
-          {
-            label: 'Edit',
-            icon: <Pencil className="h-4 w-4" />,
-            onClick: () => navigate(`/customers/${customer.id}/edit`),
-          },
+          ...(canManageRecords
+            ? [
+                {
+                  label: 'Edit',
+                  icon: <Pencil className="h-4 w-4" />,
+                  onClick: () => navigate(`/customers/${customer.id}/edit`),
+                },
+              ]
+            : []),
         ]}
       />
 
       <CustomerDetailCard
         customer={customer}
         onBack={() => navigate('/customers')}
-        onEdit={() => navigate(`/customers/${customer.id}/edit`)}
-        onDelete={handleDelete}
+        onEdit={canManageRecords ? () => navigate(`/customers/${customer.id}/edit`) : undefined}
+        onDelete={canManageRecords ? handleDelete : undefined}
         deleting={deleteCustomerMutation.isPending}
+        canManage={canManageRecords}
       />
     </div>
   );
 }
-

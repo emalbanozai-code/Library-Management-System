@@ -8,11 +8,19 @@ interface BookTableProps {
   books: Book[];
   loading?: boolean;
   onView: (book: Book) => void;
-  onEdit: (book: Book) => void;
-  onDelete: (book: Book) => void;
+  onEdit?: (book: Book) => void;
+  onDelete?: (book: Book) => void;
+  canManage?: boolean;
 }
 
-export default function BookTable({ books, loading, onView, onEdit, onDelete }: BookTableProps) {
+export default function BookTable({
+  books,
+  loading,
+  onView,
+  onEdit,
+  onDelete,
+  canManage = false,
+}: BookTableProps) {
   const columns: Column<Book>[] = [
     {
       key: 'title',
@@ -84,12 +92,16 @@ export default function BookTable({ books, loading, onView, onEdit, onDelete }: 
           <Button size="sm" variant="ghost" onClick={() => onView(book)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onEdit(book)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDelete(book)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage && onEdit ? (
+            <Button size="sm" variant="ghost" onClick={() => onEdit(book)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage && onDelete ? (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(book)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       ),
     },

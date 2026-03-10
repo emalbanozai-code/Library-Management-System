@@ -1,8 +1,9 @@
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import CustomerForm from '../components/CustomerForm';
 import { useCreateCustomer, useCustomerDetail, useUpdateCustomer } from '../queries/useCustomerQueries';
@@ -11,9 +12,14 @@ import type { CustomerFormValues } from '../types/customer';
 export default function CustomerFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const parsedId = id ? Number(id) : NaN;
   const isEditMode = Number.isFinite(parsedId);
+
+  if (isEditMode && !canManageRecords) {
+    return <Navigate to={Number.isFinite(parsedId) ? `/customers/${parsedId}` : '/customers'} replace />;
+  }
 
   const { data: customer, isLoading: isLoadingCustomer, isError } = useCustomerDetail(parsedId, isEditMode);
   const createCustomerMutation = useCreateCustomer();
@@ -91,4 +97,3 @@ export default function CustomerFormPage() {
     </div>
   );
 }
-

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui';
 
 import BookTable from '../components/BookTable';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 import { useBookFilters } from '../hooks/useBookFilters';
 import { useBookCategoriesList, useBooksList, useDeleteBook } from '../queries/useBookQueries';
 import type { Book } from '../types/book';
@@ -23,6 +24,7 @@ import type { Book } from '../types/book';
 export default function BooksListPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { canManageRecords } = useRecordManagementAccess();
   const { filters, params, updateFilter, setPage, clearFilters } = useBookFilters();
   const { data, isLoading, isError, refetch } = useBooksList(params);
   const { data: categoryData } = useBookCategoriesList({ page_size: 200, ordering: 'name' });
@@ -143,8 +145,9 @@ export default function BooksListPage() {
             books={books}
             loading={isLoading}
             onView={(book) => navigate(`/books/${book.id}`)}
-            onEdit={(book) => navigate(`/books/${book.id}/edit`)}
-            onDelete={handleDelete}
+            onEdit={canManageRecords ? (book) => navigate(`/books/${book.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
+            canManage={canManageRecords}
           />
 
           {!isLoading && totalCount > 0 && (

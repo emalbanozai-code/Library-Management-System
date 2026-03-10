@@ -124,14 +124,28 @@ class BookAPITestCase(APITestCase):
         response = self.client.post(self.alias_list_url, self._book_payload(), format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    def test_books_permission_required_for_non_superuser(self):
+    def test_non_admin_can_view_and_create_but_cannot_update_or_delete(self):
         limited_user = User.objects.create_user(
             username='book_limited',
             email='book_limited@example.com',
             password='TestPass123!',
             role_name='viewer',
         )
+        book = self._create_book()
         self.client.force_authenticate(user=limited_user)
 
-        response = self.client.get(self.list_url)
-        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+        list_response = self.client.get(self.list_url)
+        self.assertEqual(list_response.status_code, status.HTTP_200_OK)
+
+        create_response = self.client.post(self.list_url, self._book_payload(isbn='9780134494167'), format='json')
+        self.assertEqual(create_response.status_code, status.HTTP_201_CREATED)
+
+        update_response = self.client.patch(
+            f"{self.list_url}{book.id}/",
+            {'title': 'Updated'},
+            format='json',
+        )
+        self.assertEqual(update_response.status_code, status.HTTP_403_FORBIDDEN)
+
+        delete_response = self.client.delete(f"{self.list_url}{book.id}/")
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)

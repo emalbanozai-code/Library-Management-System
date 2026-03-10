@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 import { useEmployeesList } from '@/modules/employees/queries/useEmployeeQueries';
 
 import ExpenseForm from '../components/ExpenseForm';
@@ -15,9 +16,14 @@ const today = new Date().toISOString().slice(0, 10);
 export default function ExpenseFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { canManageRecords } = useRecordManagementAccess();
 
   const parsedId = id ? Number(id) : NaN;
   const isEditMode = Number.isFinite(parsedId);
+
+  if (isEditMode && !canManageRecords) {
+    return <Navigate to={Number.isFinite(parsedId) ? `/expenses/${parsedId}` : '/expenses'} replace />;
+  }
 
   const { data: employeesData, isLoading: loadingEmployees } = useEmployeesList({ page_size: 200 });
   const { data: expense, isLoading: loadingExpense, isError: expenseError } = useExpenseDetail(parsedId, isEditMode);
@@ -107,4 +113,3 @@ export default function ExpenseFormPage() {
     </div>
   );
 }
-

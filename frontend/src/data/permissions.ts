@@ -86,12 +86,15 @@ export const routePermissions: Record<string, Permission | Permission[]> = {
   "/settings/system": "settings",
   "/settings/users": "settings",
   "/users": "users",
+  "/users/new": "users",
   "/mis/settings": "settings",
   "/mis/settings/general": "settings",
   "/mis/settings/system": "settings",
   "/mis/settings/users": "settings",
   "/mis/users": "users",
+  "/mis/users/new": "users",
   "/library/users": "users",
+  "/library/users/new": "users",
   "/mis/settings/academic-year": "academic_year",
 };
 

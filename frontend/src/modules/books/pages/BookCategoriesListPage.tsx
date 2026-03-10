@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input, Pagination, PaginationInfo, Select } from '@/components/ui';
+import useRecordManagementAccess from '@/modules/auth/hooks/useRecordManagementAccess';
 
 import BookCategoryTable from '../components/BookCategoryTable';
 import { useBookCategoriesList, useDeleteBookCategory } from '../queries/useBookQueries';
@@ -11,6 +12,7 @@ import type { BookCategory } from '../types/book';
 
 export default function BookCategoriesListPage() {
   const navigate = useNavigate();
+  const { canManageRecords } = useRecordManagementAccess();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
@@ -119,8 +121,9 @@ export default function BookCategoriesListPage() {
           <BookCategoryTable
             categories={categories}
             loading={isLoading}
-            onEdit={(category) => navigate(`/books/categories/${category.id}/edit`)}
-            onDelete={handleDelete}
+            onEdit={canManageRecords ? (category) => navigate(`/books/categories/${category.id}/edit`) : undefined}
+            onDelete={canManageRecords ? handleDelete : undefined}
+            canManage={canManageRecords}
           />
 
           {!isLoading && totalCount > 0 && (

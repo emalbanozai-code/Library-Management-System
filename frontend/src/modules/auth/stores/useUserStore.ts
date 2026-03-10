@@ -28,6 +28,7 @@ export type UserProfile = {
   email: string;
   phone: string;
   role: RoleName;
+  isSuperuser?: boolean;
   avatarUrl: string | null;
   location: number;
   permissions: Permission[];

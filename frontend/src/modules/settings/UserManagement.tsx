@@ -46,7 +46,7 @@ const createUserSchema = z
     phone: z.string().optional(),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirm_password: z.string().min(8, "Confirm password is required"),
-    role_name: z.enum(["receptionist", "viewer"] as const),
+    role_name: z.enum(["receptionist", "viewer", "user_creator"] as const),
     send_verification_email: z.boolean().default(false),
   })
   .refine((data) => data.password === data.confirm_password, {
@@ -61,64 +61,27 @@ const updateUserSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
-  role_name: z.enum(["receptionist", "viewer"] as const),
+  role_name: z.enum(["receptionist", "viewer", "user_creator"] as const),
   status: z.enum(["active", "inactive"] as const),
 });
 type UpdateUserFormData = z.infer<typeof updateUserSchema>;
-const creatableRoles: RoleName[] = ["receptionist", "viewer"];
+const creatableRoles: RoleName[] = ["receptionist", "viewer", "user_creator"];
+const EMPTY_USERS: UserListItem[] = [];
 
-// Mock data for fallback
-const mockUsers: UserListItem[] = [
-  {
-    id: 1,
-    firstName: "Ahmad",
-    lastName: "Ahmadi",
-    username: "ahmad.ahmadi",
-    email: "ahmad@library.edu",
-    phone: null,
-    role: "receptionist",
-    status: "active",
-    lastLogin: null,
-    createdAt: "2024-01-15",
-    avatarUrl: null,
-    permissions: [],
-  },
-  {
-    id: 2,
-    firstName: "Fatima",
-    lastName: "Karimi",
-    username: "fatima.karimi",
-    email: "fatima@library.edu",
-    phone: null,
-    role: "receptionist",
-    status: "active",
-    lastLogin: null,
-    createdAt: "2024-01-20",
-    avatarUrl: null,
-    permissions: [],
-  },
-  {
-    id: 3,
-    firstName: "Mohammad",
-    lastName: "Rasooli",
-    username: "mohammad.r",
-    email: "mohammad@library.edu",
-    phone: null,
-    role: "viewer",
-    status: "inactive",
-    lastLogin: null,
-    createdAt: "2024-02-01",
-    avatarUrl: null,
-    permissions: [],
-  },
-];
+interface UserManagementProps {
+  defaultOpenCreateModal?: boolean;
+  onCreateModalClose?: () => void;
+}
 
-export default function UserManagement() {
+export default function UserManagement({
+  defaultOpenCreateModal = false,
+  onCreateModalClose,
+}: UserManagementProps) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("");
   const [page, setPage] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(defaultOpenCreateModal);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -126,7 +89,9 @@ export default function UserManagement() {
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
 
   const { userProfile } = useUserStore();
-  const isAdmin = userProfile?.role === "admin";
+  const isAdminOrSuperuser = userProfile?.role === "admin" || userProfile?.isSuperuser === true;
+  const canCreateUsers = isAdminOrSuperuser || userProfile?.role === "user_creator";
+  const canEditDeleteUsers = isAdminOrSuperuser;
 
   // Fetch users
   const {
@@ -175,9 +140,15 @@ export default function UserManagement() {
     resolver: zodResolver(updateUserSchema),
   });
 
-  // Use API data or fallback to mock
-  const users = usersData?.results || mockUsers;
-  const totalCount = usersData?.count || mockUsers.length;
+  const closeCreateModal = () => {
+    setIsModalOpen(false);
+    reset();
+    onCreateModalClose?.();
+  };
+
+  // Use only API data so permission/network issues are not hidden by mock records.
+  const users = usersData?.results ?? EMPTY_USERS;
+  const totalCount = usersData?.count ?? 0;
   const totalPages = Math.ceil(totalCount / 10);
 
   // Filter users locally for search (if API doesn't support search)
@@ -196,22 +167,21 @@ export default function UserManagement() {
 
   // Handle create user
   const onSubmit = async (data: CreateUserFormData) => {
-    if (!isAdmin) {
+    if (!canCreateUsers) {
       toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
       return;
     }
 
     try {
       await createUserMutation.mutateAsync(data as CreateUserData);
-      setIsModalOpen(false);
-      reset();
+      closeCreateModal();
     } catch {
       // Error is handled by the mutation
     }
   };
 
   const openEditModal = (user: UserListItem) => {
-    if (!isAdmin) {
+    if (!canEditDeleteUsers) {
       toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
       return;
     }
@@ -228,14 +198,19 @@ export default function UserManagement() {
       username: user.username,
       email: user.email,
       phone: user.phone ?? "",
-      role_name: user.role === "viewer" ? "viewer" : "receptionist",
+      role_name:
+        user.role === "user_creator"
+          ? "user_creator"
+          : user.role === "viewer"
+            ? "viewer"
+            : "receptionist",
       status: user.status,
     });
     setIsEditModalOpen(true);
   };
 
   const onUpdateSubmit = async (data: UpdateUserFormData) => {
-    if (!isAdmin) {
+    if (!canEditDeleteUsers) {
       toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
       return;
     }
@@ -261,7 +236,7 @@ export default function UserManagement() {
 
   // Handle delete user
   const handleDeleteUser = async () => {
-    if (!isAdmin) {
+    if (!canEditDeleteUsers) {
       toast.error(t("settings.adminOnlyAction", "Only administrators can manage users"));
       return;
     }
@@ -300,6 +275,7 @@ export default function UserManagement() {
   const getRoleBadge = (role: RoleName) => {
     const colors: Record<RoleName, "primary" | "info" | "warning" | "success" | "default"> = {
       admin: "primary",
+      user_creator: "warning",
       principal: "primary",
       vice_principal: "info",
       teacher: "info",
@@ -334,7 +310,7 @@ export default function UserManagement() {
         title={t("mis.settings.userManagement", "User Management")}
         subtitle={t("mis.settings.userSubtitle", "Manage system users and their access permissions")}
         actions={
-          isAdmin ? (
+          canCreateUsers ? (
             <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
               {t("settings.addUser", "Add User")}
             </Button>
@@ -342,13 +318,25 @@ export default function UserManagement() {
         }
       />
 
-      {!isAdmin && (
+      {!canCreateUsers && (
         <Card>
           <CardContent className="py-3">
             <p className="text-sm text-text-secondary">
               {t(
                 "settings.adminOnlyNotice",
                 "Only administrators can add, edit, or delete users. You can update your own profile from the profile page."
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+      {canCreateUsers && !canEditDeleteUsers && (
+        <Card>
+          <CardContent className="py-3">
+            <p className="text-sm text-text-secondary">
+              {t(
+                "settings.userCreatorNotice",
+                "You can add users, but you cannot edit or delete existing users."
               )}
             </p>
           </CardContent>
@@ -415,7 +403,7 @@ export default function UserManagement() {
                   ? t("settings.noUsersFound", "No users match your search")
                   : t("settings.noUsers", "No users found")}
               </p>
-              {!searchQuery && isAdmin && (
+              {!searchQuery && canCreateUsers && (
                 <Button onClick={() => setIsModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />}>
                   {t("settings.addFirstUser", "Add First User")}
                 </Button>
@@ -478,14 +466,14 @@ export default function UserManagement() {
                               onClick={() => openEditModal(user)}
                               className="p-2 text-text-secondary hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                               title={t("settings.editUser", "Edit User")}
-                              disabled={!isAdmin || user.role === "admin"}
+                              disabled={!canEditDeleteUsers || user.role === "admin"}
                             >
                               <Pencil className="h-4 w-4" />
                             </button>
                             <button
                               className="p-2 text-text-secondary hover:text-info hover:bg-info/10 rounded-lg transition-colors"
                               title={t("settings.managePermissions", "Manage Permissions")}
-                              disabled={!isAdmin}
+                              disabled={!canEditDeleteUsers}
                             >
                               <Shield className="h-4 w-4" />
                             </button>
@@ -493,7 +481,7 @@ export default function UserManagement() {
                               onClick={() => setDeleteUserId(user.id)}
                               className="p-2 text-text-secondary hover:text-error hover:bg-error/10 rounded-lg transition-colors"
                               title={t("settings.deleteUser", "Delete User")}
-                              disabled={!isAdmin || Number(userProfile?.id) === user.id}
+                              disabled={!canEditDeleteUsers || Number(userProfile?.id) === user.id}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -541,7 +529,7 @@ export default function UserManagement() {
       </Card>
 
       {/* Create User Modal */}
-      {isAdmin && isModalOpen && (
+      {canCreateUsers && isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -549,10 +537,7 @@ export default function UserManagement() {
                 {t("settings.addUser", "Add User")}
               </h2>
               <button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  reset();
-                }}
+                onClick={closeCreateModal}
                 className="p-2 text-text-secondary hover:text-text-primary rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -663,10 +648,7 @@ export default function UserManagement() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    reset();
-                  }}
+                  onClick={closeCreateModal}
                 >
                   {t("common.cancel", "Cancel")}
                 </Button>
@@ -680,7 +662,7 @@ export default function UserManagement() {
       )}
 
       {/* Edit User Modal */}
-      {isAdmin && isEditModalOpen && editingUser && (
+      {canEditDeleteUsers && isEditModalOpen && editingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
             <div className="flex items-center justify-between mb-6">
@@ -794,7 +776,7 @@ export default function UserManagement() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {isAdmin && deleteUserId && (
+      {canEditDeleteUsers && deleteUserId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-text-primary mb-2">

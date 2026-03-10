@@ -41,8 +41,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'username', 'email', 'phone',
             'role_name', 'permissions',
-            'language_preference', 
+            'language_preference',
             'theme', 'is_active', 'last_login'
+            , 'is_superuser'
         ]
         read_only_fields = ['id', 'last_login']
     
@@ -86,6 +87,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'email': data['email'],
             'phone': data['phone'],
             'role': data['role_name'] if data['role_name'] else None,
+            'isSuperuser': data['is_superuser'],
             'avatarUrl': avatar_url,
             'permissions': data['permissions'],
             'preferences': {
@@ -210,7 +212,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
             user.save(update_fields=['email_verification_token', 'email_verification_sent_at', 'email_verified'])
 
             # Send verification email
-            verification_url = f"{settings.FRONTEND_URL}/mis/auth/verify-email/{token}"
+            verification_url = f"{settings.FRONTEND_URL}/auth/verify-email/{token}"
             context = {
                 'user': user,
                 'verification_url': verification_url,
@@ -222,7 +224,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
                 text_content = f'Welcome! Click the link below to verify your email:\n\n{verification_url}\n\nThis link will expire in 24 hours.'
 
                 email_msg = EmailMultiAlternatives(
-                    subject='Welcome to School MIS - Verify Your Email',
+                    subject='Welcome to Library MIS - Verify Your Email',
                     body=text_content,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[user.email]

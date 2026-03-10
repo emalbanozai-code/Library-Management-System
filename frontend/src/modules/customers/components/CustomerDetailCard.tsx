@@ -7,9 +7,10 @@ import type { Customer } from '../types/customer';
 interface CustomerDetailCardProps {
   customer: Customer;
   onBack: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   deleting?: boolean;
+  canManage?: boolean;
 }
 
 export default function CustomerDetailCard({
@@ -18,6 +19,7 @@ export default function CustomerDetailCard({
   onEdit,
   onDelete,
   deleting = false,
+  canManage = false,
 }: CustomerDetailCardProps) {
   return (
     <Card>
@@ -29,12 +31,16 @@ export default function CustomerDetailCard({
             <Button variant="outline" onClick={onBack}>
               Back
             </Button>
-            <Button variant="outline" onClick={onEdit}>
-              Edit
-            </Button>
-            <Button variant="danger" onClick={onDelete} loading={deleting}>
-              Delete
-            </Button>
+            {canManage && onEdit ? (
+              <Button variant="outline" onClick={onEdit}>
+                Edit
+              </Button>
+            ) : null}
+            {canManage && onDelete ? (
+              <Button variant="danger" onClick={onDelete} loading={deleting}>
+                Delete
+              </Button>
+            ) : null}
           </div>
         }
       />
@@ -92,4 +98,3 @@ function DetailItem({ label, value }: { label: string; value: ReactNode }) {
     </div>
   );
 }
-

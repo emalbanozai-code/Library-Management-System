@@ -12,7 +12,7 @@
 //     <footer className="bg-card border-t border-border">
 //       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 //         <div className="grid md:grid-cols-4 gap-8">
-//           {/* School Info */}
+//           {/* Library Info */}
 //           <div className="col-span-2 md:col-span-1">
 //             <div className="flex items-center space-x-3 mb-4">
 //               <img
@@ -122,7 +122,7 @@
 //         </div>
 
 //         <div className="border-t border-border mt-8 pt-8 text-center text-text-secondary">
-//           <p>&copy; 2025 Sultan Zoy High School. All rights reserved.</p>
+//           <p>&copy; 2025 Library Management System. All rights reserved.</p>
 //         </div>
 //       </div>
 //     </footer>
@@ -162,11 +162,11 @@ function Footer() {
     <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8">
-          {/* School Info */}
+          {/* Library Info */}
           <div className="col-span-2 md:col-span-1">
             <img
               src="/images/logo.png"
-              alt="SultanZoi High School Logo"
+              alt="Library Logo"
               className="mb-4"
             />
 

@@ -8,8 +8,9 @@ interface CustomerTableProps {
   customers: Customer[];
   loading?: boolean;
   onView: (customer: Customer) => void;
-  onEdit: (customer: Customer) => void;
-  onDelete: (customer: Customer) => void;
+  onEdit?: (customer: Customer) => void;
+  onDelete?: (customer: Customer) => void;
+  canManage?: boolean;
 }
 
 const getInitials = (customer: Customer) =>
@@ -21,6 +22,7 @@ export default function CustomerTable({
   onView,
   onEdit,
   onDelete,
+  canManage = false,
 }: CustomerTableProps) {
   const columns: Column<Customer>[] = [
     {
@@ -104,12 +106,16 @@ export default function CustomerTable({
           <Button size="sm" variant="ghost" onClick={() => onView(customer)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => onEdit(customer)}>
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => onDelete(customer)}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {canManage && onEdit ? (
+            <Button size="sm" variant="ghost" onClick={() => onEdit(customer)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+          ) : null}
+          {canManage && onDelete ? (
+            <Button size="sm" variant="ghost" onClick={() => onDelete(customer)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
       ),
     },
@@ -128,4 +134,3 @@ export default function CustomerTable({
     </Card>
   );
 }
-

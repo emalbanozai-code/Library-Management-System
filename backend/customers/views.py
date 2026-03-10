@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.notification_events import notify_customer_created
 from core.pagination import StandardResultsSetPagination
 from core.permissions import PermissionMixin
 from sales.models import Customer as SalesCustomer
@@ -31,6 +32,10 @@ class CustomerViewSet(PermissionMixin, viewsets.ModelViewSet):
         'updated_at',
     ]
     pagination_class = StandardResultsSetPagination
+
+    def perform_create(self, serializer):
+        customer = serializer.save()
+        notify_customer_created(customer, actor=self.request.user)
 
     def _get_or_create_sales_customer(self, customer: Customer) -> SalesCustomer:
         if customer.email:
