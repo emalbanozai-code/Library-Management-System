@@ -5,6 +5,7 @@ from .models import Employee
 
 class EmployeeFilter(filters.FilterSet):
     role_name = filters.CharFilter(field_name='user__role_name', lookup_expr='iexact')
+    position = filters.CharFilter(field_name='user__role_name', lookup_expr='iexact')
     status = filters.ChoiceFilter(field_name='status', choices=Employee.STATUS_CHOICES)
     membership_type = filters.ChoiceFilter(field_name='membership_type', choices=Employee.MEMBERSHIP_CHOICES)
     join_date_from = filters.DateFilter(field_name='join_date', lookup_expr='gte')
@@ -15,6 +16,7 @@ class EmployeeFilter(filters.FilterSet):
     class Meta:
         model = Employee
         fields = [
+            'position',
             'role_name',
             'status',
             'membership_type',

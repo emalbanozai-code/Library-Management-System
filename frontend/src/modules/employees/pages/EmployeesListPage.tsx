@@ -24,7 +24,7 @@ import {
 } from '../queries/useEmployeeQueries';
 import {
   employeeMembershipOptions,
-  employeeRoleOptions,
+  employeePositionOptions,
   employeeStatusOptions,
   type Employee,
 } from '../types/employee';
@@ -91,12 +91,12 @@ export default function EmployeesListPage() {
               onChange={(event) => updateFilter('search', event.target.value)}
             />
             <Select
-              value={filters.roleName}
+              value={filters.position}
               options={[
                 { label: t('employee.allRoles'), value: '' },
-                ...employeeRoleOptions,
+                ...employeePositionOptions,
               ]}
-              onChange={(event) => updateFilter('roleName', event.target.value)}
+              onChange={(event) => updateFilter('position', event.target.value)}
             />
             <Select
               value={filters.status}

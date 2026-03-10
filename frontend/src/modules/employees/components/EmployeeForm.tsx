@@ -7,8 +7,9 @@ import { Button, Card, CardContent, Checkbox, FileUpload, Input, Select, Textare
 import { getEmployeeFormSchema } from '../schemas/employeeSchema';
 import type { EmployeeFormValues } from '../types/employee';
 import {
+  employeeGenderOptions,
   employeeMembershipOptions,
-  employeeRoleOptions,
+  employeePositionOptions,
   employeeStatusOptions,
   weekdayOptions,
 } from '../types/employee';
@@ -27,6 +28,7 @@ const defaultValues: EmployeeFormValues = {
   last_name: '',
   father_name: '',
   date_of_birth: '',
+  gender: '',
   address: '',
   phone: '',
   email: '',
@@ -34,7 +36,7 @@ const defaultValues: EmployeeFormValues = {
   work_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
   join_date: '',
   membership_type: 'permanent',
-  role: 'staff',
+  position: 'receptionist',
   status: 'active',
   username: '',
   picture: undefined,
@@ -95,6 +97,7 @@ export default function EmployeeForm({
     const normalized: EmployeeFormValues = {
       ...values,
       password: values.password?.trim() || undefined,
+      gender: values.gender || '',
     };
     await onSubmit(normalized);
   };
@@ -112,6 +115,20 @@ export default function EmployeeForm({
               label="Date of Birth"
               {...register('date_of_birth')}
               error={errors.date_of_birth?.message}
+            />
+            <Controller
+              name="gender"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  label="Gender"
+                  placeholder="Select gender"
+                  value={field.value}
+                  options={employeeGenderOptions}
+                  onChange={(event) => field.onChange(event.target.value as EmployeeFormValues['gender'])}
+                  error={errors.gender?.message}
+                />
+              )}
             />
             <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
             <Input type="email" label="Email" {...register('email')} error={errors.email?.message} />
@@ -153,15 +170,15 @@ export default function EmployeeForm({
               )}
             />
             <Controller
-              name="role"
+              name="position"
               control={control}
               render={({ field }) => (
                 <Select
-                  label="Role"
+                  label="Position"
                   value={field.value}
-                  options={employeeRoleOptions}
-                  onChange={(event) => field.onChange(event.target.value as EmployeeFormValues['role'])}
-                  error={errors.role?.message}
+                  options={employeePositionOptions}
+                  onChange={(event) => field.onChange(event.target.value as EmployeeFormValues['position'])}
+                  error={errors.position?.message}
                 />
               )}
             />

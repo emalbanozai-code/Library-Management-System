@@ -14,7 +14,7 @@ const parseNumber = (value: string | null, fallback: number) => {
 
 type FilterKey =
   | 'search'
-  | 'roleName'
+  | 'position'
   | 'status'
   | 'membershipType'
   | 'ordering'
@@ -26,7 +26,7 @@ export const useEmployeeFilters = () => {
   const page = parseNumber(searchParams.get('page'), 1);
   const pageSize = parseNumber(searchParams.get('page_size'), 10);
   const search = searchParams.get('search') || '';
-  const roleName = searchParams.get('role_name') || '';
+  const position = searchParams.get('position') || searchParams.get('role_name') || '';
   const status = searchParams.get('status') || '';
   const membershipType = searchParams.get('membership_type') || '';
   const ordering = searchParams.get('ordering') || '-created_at';
@@ -36,26 +36,24 @@ export const useEmployeeFilters = () => {
       page,
       page_size: pageSize,
       search: search || undefined,
-      role_name: roleName ? (roleName as EmployeeListParams['role_name']) : undefined,
+      position: position ? (position as EmployeeListParams['position']) : undefined,
       status: status ? (status as EmployeeListParams['status']) : undefined,
       membership_type: membershipType
         ? (membershipType as EmployeeListParams['membership_type'])
         : undefined,
       ordering: ordering || undefined,
     };
-  }, [membershipType, ordering, page, pageSize, roleName, search, status]);
+  }, [membershipType, ordering, page, pageSize, position, search, status]);
 
   const updateFilter = (key: FilterKey, value: string | number) => {
     const next = new URLSearchParams(searchParams);
 
     const mappedKey =
-      key === 'roleName'
-        ? 'role_name'
-        : key === 'membershipType'
-          ? 'membership_type'
-          : key === 'pageSize'
-            ? 'page_size'
-            : key;
+      key === 'membershipType'
+        ? 'membership_type'
+        : key === 'pageSize'
+          ? 'page_size'
+          : key;
 
     if (!value) {
       next.delete(mappedKey);
@@ -86,7 +84,7 @@ export const useEmployeeFilters = () => {
       page,
       pageSize,
       search,
-      roleName,
+      position,
       status,
       membershipType,
       ordering,

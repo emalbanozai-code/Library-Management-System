@@ -19,6 +19,7 @@ const employeeBaseSchema = z
       .string()
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format'),
+    gender: z.union([z.enum(['male', 'female', 'other']), z.literal('')]),
     address: z.string().trim().min(1, 'Address is required'),
     phone: z.string().trim().min(1, 'Phone is required'),
     email: z.string().trim().email('Invalid email address'),
@@ -29,7 +30,7 @@ const employeeBaseSchema = z
       .trim()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Join date must be in YYYY-MM-DD format'),
     membership_type: z.enum(['permanent', 'contract', 'intern']),
-    role: z.enum(['admin', 'manager', 'staff']),
+    position: z.enum(['admin', 'user_creator', 'receptionist', 'viewer']),
     status: z.enum(['active', 'inactive']),
     username: z.string().trim().min(1, 'Username is required'),
     picture: z.instanceof(File).optional(),

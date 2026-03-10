@@ -27,6 +27,7 @@ export default function EmployeeFormPage() {
         last_name: employee.last_name,
         father_name: employee.father_name,
         date_of_birth: employee.date_of_birth,
+        gender: employee.gender || '',
         address: employee.address,
         phone: employee.phone,
         email: employee.email,
@@ -34,7 +35,7 @@ export default function EmployeeFormPage() {
         work_days: employee.work_days,
         join_date: employee.join_date,
         membership_type: employee.membership_type,
-        role: employee.role,
+        position: employee.position,
         status: employee.status,
         username: employee.username,
       }
@@ -44,6 +45,7 @@ export default function EmployeeFormPage() {
     const payload: EmployeeFormValues = {
       ...values,
       password: values.password?.trim() || undefined,
+      gender: values.gender || '',
     };
 
     if (isEditMode) {

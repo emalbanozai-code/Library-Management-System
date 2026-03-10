@@ -68,11 +68,18 @@ export default function EmployeeTable({
       render: (employee) => employee.phone,
     },
     {
-      key: 'role',
-      header: 'Role',
-      label: 'Role',
+      key: 'position',
+      header: 'Position',
+      label: 'Position',
       sortable: true,
-      render: (employee) => employee.role,
+      render: (employee) => employee.position,
+    },
+    {
+      key: 'gender',
+      header: 'Gender',
+      label: 'Gender',
+      sortable: true,
+      render: (employee) => (employee.gender ? employee.gender : 'N/A'),
     },
     {
       key: 'salary',

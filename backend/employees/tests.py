@@ -34,7 +34,7 @@ class EmployeeAPITestCase(APITestCase):
             'work_days': ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
             'join_date': '2024-01-01',
             'membership_type': 'permanent',
-            'role': 'receptionist',
+            'position': 'receptionist',
             'status': 'active',
             'username': 'john.doe',
             'password': 'StrongPass123!',
@@ -75,13 +75,13 @@ class EmployeeAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
 
-    def test_update_syncs_role_and_status_with_user(self):
+    def test_update_syncs_position_and_status_with_user(self):
         create_response = self.client.post(self.list_url, self._payload(), format='json')
         employee_id = create_response.data['id']
 
         response = self.client.patch(
             f'{self.list_url}{employee_id}/',
-            {'role': 'viewer', 'status': 'inactive', 'salary': '750.00'},
+            {'position': 'viewer', 'status': 'inactive', 'salary': '750.00'},
             format='json',
         )
 

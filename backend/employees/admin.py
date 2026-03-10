@@ -10,7 +10,7 @@ class EmployeeAdmin(admin.ModelAdmin):
         'get_full_name',
         'get_username',
         'get_email',
-        'get_role',
+        'get_position',
         'membership_type',
         'status',
         'join_date',
@@ -38,6 +38,6 @@ class EmployeeAdmin(admin.ModelAdmin):
     def get_email(self, obj):
         return obj.user.email
 
-    @admin.display(description='Role')
-    def get_role(self, obj):
+    @admin.display(description='Position')
+    def get_position(self, obj):
         return obj.user.role_name

@@ -11,7 +11,7 @@ from .models import Employee
 
 
 User = get_user_model()
-VALID_ROLES = [role for role, _ in ROLE_CHOICES]
+VALID_POSITIONS = [role for role, _ in ROLE_CHOICES]
 WEEKDAY_CHOICES = [
     'monday',
     'tuesday',
@@ -29,7 +29,7 @@ class EmployeeListSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='user.phone', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
-    role = serializers.CharField(source='user.role_name', read_only=True)
+    position = serializers.CharField(source='user.role_name', read_only=True)
 
     work_days = serializers.SerializerMethodField()
 
@@ -42,14 +42,15 @@ class EmployeeListSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'username',
-            'role',
             'father_name',
             'date_of_birth',
+            'gender',
             'address',
             'salary',
             'work_days',
             'join_date',
             'membership_type',
+            'position',
             'status',
             'picture',
             'created_at',
@@ -75,7 +76,12 @@ class EmployeeWriteSerializer(serializers.ModelSerializer):
     email = serializers.EmailField()
     username = serializers.CharField(max_length=150)
     password = serializers.CharField(write_only=True, required=False, trim_whitespace=False)
-    role = serializers.ChoiceField(choices=VALID_ROLES)
+    position = serializers.ChoiceField(choices=VALID_POSITIONS)
+    gender = serializers.ChoiceField(
+        choices=[choice for choice, _ in Employee.GENDER_CHOICES],
+        required=False,
+        allow_null=True,
+    )
     status = serializers.ChoiceField(choices=[choice for choice, _ in Employee.STATUS_CHOICES])
     work_days = serializers.ListField(
         child=serializers.ChoiceField(choices=WEEKDAY_CHOICES),
@@ -91,6 +97,7 @@ class EmployeeWriteSerializer(serializers.ModelSerializer):
             'last_name',
             'father_name',
             'date_of_birth',
+            'gender',
             'address',
             'phone',
             'email',
@@ -98,7 +105,7 @@ class EmployeeWriteSerializer(serializers.ModelSerializer):
             'work_days',
             'join_date',
             'membership_type',
-            'role',
+            'position',
             'status',
             'username',
             'password',
@@ -160,7 +167,7 @@ class EmployeeWriteSerializer(serializers.ModelSerializer):
             'phone': validated_data.pop('phone'),
             'email': validated_data.pop('email'),
             'username': validated_data.pop('username'),
-            'role_name': validated_data.pop('role'),
+            'role_name': validated_data.pop('position'),
         }
         password = validated_data.pop('password')
         status = validated_data.get('status', Employee.STATUS_ACTIVE)
@@ -186,7 +193,7 @@ class EmployeeWriteSerializer(serializers.ModelSerializer):
         user.phone = validated_data.pop('phone', user.phone)
         user.email = validated_data.pop('email', user.email)
         user.username = validated_data.pop('username', user.username)
-        user.role_name = validated_data.pop('role', user.role_name)
+        user.role_name = validated_data.pop('position', user.role_name)
 
         password = validated_data.pop('password', None)
         if password:

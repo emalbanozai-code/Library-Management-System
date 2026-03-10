@@ -86,7 +86,8 @@ export default function EmployeeDetailCard({
           <DetailItem label="Salary" value={`$${Number(employee.salary).toFixed(2)}`} />
           <DetailItem label="Join Date" value={new Date(employee.join_date).toLocaleDateString()} />
           <DetailItem label="Membership Type" value={<Badge variant="primary">{employee.membership_type}</Badge>} />
-          <DetailItem label="Role" value={<Badge variant="info">{employee.role}</Badge>} />
+          <DetailItem label="Position" value={<Badge variant="info">{employee.position}</Badge>} />
+          <DetailItem label="Gender" value={employee.gender || 'N/A'} />
           <DetailItem label="Status" value={<EmployeeStatusBadge status={employee.status} />} />
           <DetailItem label="Work Days" value={workDays || 'N/A'} />
           <DetailItem label="Created At" value={new Date(employee.created_at).toLocaleString()} />

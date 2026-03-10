@@ -17,7 +17,7 @@ const convertToFormData = (data: EmployeeFormValues): FormData => {
   const { picture, password, work_days, ...rest } = data;
 
   Object.entries(rest).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
+    if (value !== undefined && value !== null && String(value) !== '') {
       formData.append(key, String(value));
     }
   });

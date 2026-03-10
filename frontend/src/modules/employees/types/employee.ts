@@ -1,4 +1,5 @@
-export type EmployeeRole = 'admin' | 'manager' | 'staff';
+export type EmployeePosition = 'admin' | 'user_creator' | 'receptionist' | 'viewer';
+export type EmployeeGender = 'male' | 'female' | 'other';
 export type EmployeeStatus = 'active' | 'inactive';
 export type MembershipType = 'permanent' | 'contract' | 'intern';
 export type Weekday =
@@ -16,6 +17,7 @@ export interface Employee {
   last_name: string;
   father_name: string;
   date_of_birth: string;
+  gender: EmployeeGender | null;
   address: string;
   phone: string;
   email: string;
@@ -23,7 +25,7 @@ export interface Employee {
   work_days: Weekday[];
   join_date: string;
   membership_type: MembershipType;
-  role: EmployeeRole;
+  position: EmployeePosition;
   status: EmployeeStatus;
   username: string;
   picture: string | null;
@@ -36,6 +38,7 @@ export interface EmployeeFormValues {
   last_name: string;
   father_name: string;
   date_of_birth: string;
+  gender: EmployeeGender | '';
   address: string;
   phone: string;
   email: string;
@@ -43,7 +46,7 @@ export interface EmployeeFormValues {
   work_days: Weekday[];
   join_date: string;
   membership_type: MembershipType;
-  role: EmployeeRole;
+  position: EmployeePosition;
   status: EmployeeStatus;
   username: string;
   picture?: File;
@@ -54,7 +57,8 @@ export interface EmployeeListParams {
   page?: number;
   page_size?: number;
   search?: string;
-  role_name?: EmployeeRole;
+  position?: EmployeePosition;
+  role_name?: EmployeePosition;
   status?: EmployeeStatus;
   membership_type?: MembershipType;
   join_date_from?: string;
@@ -71,10 +75,17 @@ export interface PaginatedEmployeesResponse {
   results: Employee[];
 }
 
-export const employeeRoleOptions: Array<{ label: string; value: EmployeeRole }> = [
-  { label: 'Admin', value: 'admin' },
-  { label: 'Manager', value: 'manager' },
-  { label: 'Staff', value: 'staff' },
+export const employeePositionOptions: Array<{ label: string; value: EmployeePosition }> = [
+  { label: 'Administrator', value: 'admin' },
+  { label: 'User Creator', value: 'user_creator' },
+  { label: 'Receptionist', value: 'receptionist' },
+  { label: 'Viewer', value: 'viewer' },
+];
+
+export const employeeGenderOptions: Array<{ label: string; value: EmployeeGender }> = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+  { label: 'Other', value: 'other' },
 ];
 
 export const employeeStatusOptions: Array<{ label: string; value: EmployeeStatus }> = [

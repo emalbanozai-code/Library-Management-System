@@ -31,6 +31,15 @@ class Employee(BaseModel):
         (STATUS_INACTIVE, 'Inactive'),
     ]
 
+    GENDER_MALE = 'male'
+    GENDER_FEMALE = 'female'
+    GENDER_OTHER = 'other'
+    GENDER_CHOICES = [
+        (GENDER_MALE, 'Male'),
+        (GENDER_FEMALE, 'Female'),
+        (GENDER_OTHER, 'Other'),
+    ]
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -38,6 +47,7 @@ class Employee(BaseModel):
     )
     father_name = models.CharField(max_length=150)
     date_of_birth = models.DateField()
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     address = models.TextField()
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     work_days = models.TextField(default='[]')
