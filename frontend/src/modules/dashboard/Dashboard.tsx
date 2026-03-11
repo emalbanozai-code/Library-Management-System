@@ -5,6 +5,8 @@ import {
   Handshake,
   RefreshCw,
   ShoppingCart,
+  TrendingDown,
+  TrendingUp,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -91,7 +93,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard"
-        subtitle="Overview of books, sales, employees, customers, lending, and expenses"
+        subtitle="Real-time operational and financial snapshot"
         actions={[
           {
             label: isFetching ? 'Refreshing...' : 'Refresh',
@@ -102,15 +104,33 @@ export default function Dashboard() {
         ]}
       />
 
-      <Card className="overflow-hidden border-0 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white shadow-xl">
-        <CardContent className="grid grid-cols-1 gap-4 p-6 md:grid-cols-3">
-          <SummaryBlock label="Total Sales" value={toCurrency(totalSalesAmount)} />
-          <SummaryBlock label="Total Expenses" value={toCurrency(totalExpensesAmount)} />
-          <SummaryBlock
-            label="Net Balance"
-            value={toCurrency(netAmount)}
-            valueClassName={netAmount >= 0 ? 'text-emerald-300' : 'text-rose-300'}
-          />
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <SummaryCard
+          label="Total Sales"
+          value={toCurrency(totalSalesAmount)}
+          icon={ShoppingCart}
+          tone="success"
+        />
+        <SummaryCard
+          label="Total Expenses"
+          value={toCurrency(totalExpensesAmount)}
+          icon={Wallet}
+          tone="error"
+        />
+        <SummaryCard
+          label="Net Balance"
+          value={toCurrency(netAmount)}
+          icon={netAmount >= 0 ? TrendingUp : TrendingDown}
+          tone={netAmount >= 0 ? 'success' : 'error'}
+        />
+      </div>
+
+      <Card>
+        <CardContent className="grid grid-cols-2 gap-3 p-4 text-xs text-text-secondary md:grid-cols-4">
+          <MetaPill label="Books In Stock" value={`${booksInStockPercent}%`} />
+          <MetaPill label="Active Employees" value={`${activeEmployeesPercent}%`} />
+          <MetaPill label="Active Customers" value={`${activeCustomersPercent}%`} />
+          <MetaPill label="Returned Lendings" value={`${lendingReturnedPercent}%`} />
         </CardContent>
       </Card>
 
@@ -118,51 +138,54 @@ export default function Dashboard() {
         <DashboardCard
           title="Books"
           value={data.books.total}
+          subtitle={`${data.books.in_stock} in stock | ${data.books.out_of_stock} out`}
           icon={BookMarked}
           color="primary"
-          subtitle={`${data.books.in_stock} in stock | ${data.books.out_of_stock} out of stock`}
         />
         <DashboardCard
           title="Sales"
           value={data.sales.count}
+          subtitle={`Sales volume: ${toCurrency(data.sales.total_amount)}`}
           icon={ShoppingCart}
           color="success"
-          subtitle={`Total sales amount: ${toCurrency(data.sales.total_amount)}`}
         />
         <DashboardCard
           title="Employees"
           value={data.employees.total}
+          subtitle={`${data.employees.active} active staff`}
           icon={Briefcase}
           color="info"
-          subtitle={`${data.employees.active} active`}
         />
         <DashboardCard
           title="Customers"
           value={data.customers.total}
+          subtitle={`${data.customers.active} active readers`}
           icon={Users}
           color="warning"
-          subtitle={`${data.customers.active} active`}
         />
         <DashboardCard
           title="Lending"
           value={data.lending.total}
+          subtitle={`${data.lending.not_returned} open | ${data.lending.returned} returned`}
           icon={Handshake}
           color="primary"
-          subtitle={`${data.lending.not_returned} not returned | ${data.lending.returned} returned`}
         />
         <DashboardCard
           title="Expenses"
           value={data.expenses.count}
+          subtitle={`Total expenses: ${toCurrency(data.expenses.total_amount)}`}
           icon={Wallet}
           color="error"
-          subtitle={`Total expenses: ${toCurrency(data.expenses.total_amount)}`}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card>
-          <CardContent className="space-y-4">
-            <h3 className="text-base font-semibold text-text-primary">Operations Health</h3>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardContent className="space-y-5 p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-text-primary">Operations Health</h3>
+              <span className="text-xs text-text-secondary">Target 100%</span>
+            </div>
             <HealthRow label="Books In Stock" value={booksInStockPercent} />
             <HealthRow label="Active Employees" value={activeEmployeesPercent} />
             <HealthRow label="Active Customers" value={activeCustomersPercent} />
@@ -171,12 +194,39 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 p-5">
+            <h3 className="text-base font-semibold text-text-primary">Performance Mix</h3>
+            <RingStat label="Open Lendings" value={data.lending.not_returned} total={data.lending.total} />
+            <RingStat label="Out of Stock" value={data.books.out_of_stock} total={data.books.total} />
+            <RingStat label="Net Margin" value={netAmount} total={totalSalesAmount || 1} currency />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="space-y-3 p-5">
             <h3 className="text-base font-semibold text-text-primary">Quick Insights</h3>
             <InsightRow label="Current Open Lendings" value={String(data.lending.not_returned)} />
             <InsightRow label="Books Out Of Stock" value={String(data.books.out_of_stock)} />
-            <InsightRow label="Average Sale Value" value={toCurrency(data.sales.count ? totalSalesAmount / data.sales.count : 0)} />
-            <InsightRow label="Average Expense Value" value={toCurrency(data.expenses.count ? totalExpensesAmount / data.expenses.count : 0)} />
+            <InsightRow
+              label="Average Sale Value"
+              value={toCurrency(data.sales.count ? totalSalesAmount / data.sales.count : 0)}
+            />
+            <InsightRow
+              label="Average Expense Value"
+              value={toCurrency(data.expenses.count ? totalExpensesAmount / data.expenses.count : 0)}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <h3 className="text-base font-semibold text-text-primary">Today Focus</h3>
+            <FocusRow label="Stock Refill Needed" value={data.books.out_of_stock > 0 ? 'Yes' : 'No'} />
+            <FocusRow label="Customer Engagement" value={`${activeCustomersPercent}% active`} />
+            <FocusRow label="Staff Availability" value={`${activeEmployeesPercent}% active`} />
+            <FocusRow label="Revenue Health" value={netAmount >= 0 ? 'Positive' : 'Negative'} />
           </CardContent>
         </Card>
       </div>
@@ -184,31 +234,52 @@ export default function Dashboard() {
   );
 }
 
-function SummaryBlock({
+function SummaryCard({
   label,
   value,
-  valueClassName = 'text-white',
+  icon: Icon,
+  tone,
 }: {
   label: string;
   value: string;
-  valueClassName?: string;
+  icon: typeof ShoppingCart;
+  tone: 'success' | 'error';
 }) {
+  const toneClass = tone === 'success' ? 'bg-success-soft text-success' : 'bg-error-soft text-error';
   return (
-    <div className="rounded-lg border border-white/15 bg-white/5 p-4">
-      <p className="text-xs uppercase tracking-wide text-slate-300">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${valueClassName}`}>{value}</p>
+    <Card>
+      <CardContent className="space-y-3 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-text-secondary">{label}</p>
+            <p className="mt-2 text-2xl font-semibold text-text-primary">{value}</p>
+          </div>
+          <div className={`rounded-xl p-3 ${toneClass}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetaPill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-full border border-border bg-card px-3 py-1 text-center">
+      <span className="text-[11px] text-text-secondary">{label}</span>
+      <span className="ml-2 text-xs font-semibold text-text-primary">{value}</span>
     </div>
   );
 }
 
 function HealthRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
         <span className="text-text-secondary">{label}</span>
         <span className="font-medium text-text-primary">{value}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+      <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
           style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
@@ -223,6 +294,45 @@ function InsightRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2">
       <span className="text-sm text-text-secondary">{label}</span>
       <span className="text-sm font-semibold text-text-primary">{value}</span>
+    </div>
+  );
+}
+
+function FocusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-3 py-2">
+      <span className="text-sm text-text-secondary">{label}</span>
+      <span className="text-sm font-semibold text-text-primary">{value}</span>
+    </div>
+  );
+}
+
+function RingStat({
+  label,
+  value,
+  total,
+  currency = false,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  currency?: boolean;
+}) {
+  const safeTotal = total || 1;
+  const percent = Math.max(0, Math.min(100, Math.round((Number(value) / safeTotal) * 100)));
+  const displayValue = currency ? toCurrency(value) : String(value);
+  const gradient = `conic-gradient(#22c55e ${percent * 3.6}deg, #e5e7eb 0deg)`;
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-surface px-3 py-3">
+      <div>
+        <p className="text-sm text-text-secondary">{label}</p>
+        <p className="text-base font-semibold text-text-primary">{displayValue}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 rounded-full" style={{ background: gradient }} aria-label={`${label} ${percent}%`} />
+        <span className="text-sm font-semibold text-text-primary">{percent}%</span>
+      </div>
     </div>
   );
 }

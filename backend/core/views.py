@@ -445,6 +445,7 @@ class SystemReportView(APIView):
         return str(Decimal(value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
 
 
+
 class InitializeView(PermissionMixin, APIView):
     def get(self, request):
         return Response(_get_initial_data(request))

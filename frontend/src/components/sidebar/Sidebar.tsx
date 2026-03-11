@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
+  BarChart3,
   FileText,
   LogOut,
   BookMarked,
@@ -116,6 +117,14 @@ export default function Sidebar() {
       label: "Reports",
       icon: FileText,
       divider: true,
+      subItems: [
+        {
+          id: "reports-system",
+          path: "/reports",
+          label: "System Report",
+          icon: BarChart3,
+        },
+      ] as SubNavItem[],
     },
   ];
 

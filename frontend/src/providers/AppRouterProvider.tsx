@@ -97,7 +97,7 @@ function AppRouterProvider() {
       errorElement: <NotFoundPage />,
       children: [
         // Dashboard
-        { index: true, element: <Navigate to="/mis" replace /> },
+        { index: true, element: <Dashboard /> },
         { path: "mis", element: <Dashboard /> },
         // Settings
         { path: "settings", element: <SettingsOverview /> },
@@ -213,7 +213,7 @@ function AppRouterProvider() {
       path: "/auth/verify-email/:token",
       element: <VerifyEmailPage />,
     },
-  ]);
+  ], { basename: import.meta.env.BASE_URL });
 
   return <RouterProvider router={router} />;
 }

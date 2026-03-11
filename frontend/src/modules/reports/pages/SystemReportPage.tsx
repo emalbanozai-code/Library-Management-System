@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart3, RefreshCw } from 'lucide-react';
+import { BarChart3, Printer, RefreshCw } from 'lucide-react';
 
 import { PageHeader } from '@/components';
 import { Button, Card, CardContent, Input } from '@/components/ui';
@@ -82,6 +82,9 @@ export default function SystemReportPage() {
         })
         .then((response) => response.data),
   });
+  const handlePrint = () => {
+    window.print();
+  };
 
   const applyDateFilter = () => {
     if (draftRange.end_date < draftRange.start_date) {
@@ -115,6 +118,12 @@ export default function SystemReportPage() {
             icon: <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />,
             variant: 'outline',
             onClick: () => refetch(),
+          },
+          {
+            label: 'Print',
+            icon: <Printer className="h-4 w-4" />,
+            variant: 'outline',
+            onClick: handlePrint,
           },
         ]}
       />

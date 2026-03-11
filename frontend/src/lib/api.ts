@@ -19,13 +19,16 @@ const clearAccessToken = (): void => {
 
 type RuntimeConfigWindow = Window & {
   __APP_CONFIG__?: {
-    VITE_API_BASE_URL?: string;
+    VITE_API_URL?: string;
+    VITE_API_BASE_URL?: string; // Backward compatibility
   };
 };
 
 const runtimeConfig = (window as RuntimeConfigWindow).__APP_CONFIG__;
 const API_BASE_URL =
+  runtimeConfig?.VITE_API_URL ||
   runtimeConfig?.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   "http://localhost:8000/api";
 
