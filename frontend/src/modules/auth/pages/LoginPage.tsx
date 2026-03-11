@@ -58,7 +58,6 @@ export default function LoginPage() {
       password: "",
     },
   });
-
   const onSubmit = async (data: LoginFormInputs) => {
     clearError();
     setAttemptsRemaining(null);
