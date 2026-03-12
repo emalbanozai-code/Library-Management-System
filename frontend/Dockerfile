@@ -17,5 +17,4 @@ COPY docker-entrypoint.d/99-runtime-config.sh /docker-entrypoint.d/99-runtime-co
 RUN chmod +x /docker-entrypoint.d/99-runtime-config.sh
 
 ENV PORT=3000
-ENV VITE_API_BASE_URL=http://localhost:8000/api
 EXPOSE 3000
