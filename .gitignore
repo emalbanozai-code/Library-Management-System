@@ -38,3 +38,8 @@ feedbacks/
 !*.env.example
 !**/.env.example
 backend/staticfiles/
+
+
+
+
+.env/
